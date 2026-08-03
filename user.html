@@ -80,7 +80,7 @@
                     <option value="03">March</option>
                     <option value="04">April</option>
                     <option value="05">May</option>
-                    <option value="06" selected>June</option>
+                    <option value="06">June</option>
                     <option value="07">July</option>
                     <option value="08">August</option>
                     <option value="09">September</option>
@@ -91,7 +91,7 @@
                 <select id="globalYearFilter" class="select-input" onchange="renderApprovalTable()">
                     <option value="2024">2024</option>
                     <option value="2025">2025</option>
-                    <option value="2026" selected>2026</option>
+                    <option value="2026">2026</option>
                     <option value="2027">2027</option>
                     <option value="2028">2028</option>
                 </select>
@@ -129,7 +129,11 @@
                     <div class="form-group"><label for="estimatedCost">Total Calculated Cost (PHP)</label><input type="number" id="estimatedCost" placeholder="0.00" readonly style="background-color: #E2E8F0; font-weight: bold;"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label for="requestDate">Date of Request</label><input type="date" id="requestDate" required></div>
+                    <div class="form-group">
+                        <label for="requestDate">Date of Request (Current Date Auto-Locked)</label>
+                        <!-- Non-editable current date input -->
+                        <input type="date" id="requestDate" required readonly style="background-color: #E2E8F0; cursor: not-allowed; font-weight: bold; color: var(--primary-blue);">
+                    </div>
                 </div>
                 <div class="form-group"><label for="purpose">Purpose of Official Mission</label><textarea id="purpose" required placeholder="Detail usage parameters..."></textarea></div>
                 <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
@@ -149,7 +153,20 @@
     </div>
 
     <script>
-        document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+        // Set the requested date field strictly to today's date
+        function setCurrentDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('requestDate').value = today;
+
+            // Set default filters to current month & year
+            const [yCurrent, mCurrent] = today.split('-');
+            if (!document.getElementById('editRecordTargetId').value) {
+                document.getElementById('globalYearFilter').value = yCurrent;
+                document.getElementById('globalMonthFilter').value = mCurrent;
+            }
+        }
+        
+        setCurrentDate();
 
         function getDB() { return JSON.parse(localStorage.getItem('pcg_fuel_db')) || []; }
         function saveDB(db) { localStorage.setItem('pcg_fuel_db', JSON.stringify(db)); }
@@ -171,8 +188,12 @@
         function handleFormSubmit(e) {
             e.preventDefault();
             const db = getDB();
-            const dateVal = document.getElementById('requestDate').value;
-            const transactionMonth = dateVal.substring(0, 7); // Extracts YYYY-MM
+            
+            // Always lock date to system current date
+            const dateVal = new Date().toISOString().split('T')[0];
+            document.getElementById('requestDate').value = dateVal;
+            
+            const transactionMonth = dateVal.substring(0, 7); // YYYY-MM
             const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
             const vehicleVal = document.getElementById('vesselVehicle').value;
 
@@ -221,13 +242,12 @@
                 alert(`Success! Requisition ${newRequest.reqId} generated.`);
             }
 
-            // Sync top filters to newly submitted record's month & year
             const [yPart, mPart] = transactionMonth.split('-');
             document.getElementById('globalYearFilter').value = yPart;
             document.getElementById('globalMonthFilter').value = mPart;
 
             document.getElementById('fuelRequestForm').reset();
-            document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+            setCurrentDate();
             switchTab('tab-approval');
         }
 
@@ -246,7 +266,6 @@
             const parsedPrice = target.cost / target.quantity;
             document.getElementById('fuelPrice').value = parsedPrice.toFixed(2);
             document.getElementById('estimatedCost').value = target.cost.toFixed(2);
-            document.getElementById('requestDate').value = target.date;
 
             document.getElementById('editFormModeBanner').style.display = "block";
             document.getElementById('submitFormBtn').className = "btn-submit mode-edit";
