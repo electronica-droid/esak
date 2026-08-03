@@ -23,7 +23,8 @@
         .header-text h1 { font-size: 22px; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 0.5px; }
         .header-text h2 { font-size: 15px; color: var(--ocean-blue); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
         
-        .controls-bar { background-color: #F8FAFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .controls-bar { background-color: #F8FAFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .filter-group { display: flex; align-items: center; gap: 8px; }
         .select-input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-weight: 600; color: var(--primary-blue); background: var(--white); }
         
         .tabs-nav { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; gap: 5px; }
@@ -66,12 +67,28 @@
         </div>
 
         <div class="controls-bar">
-            <div>
-                <label for="globalMonthFilter" style="font-weight:bold; font-size:13px; color:var(--primary-blue);">Accounting Month Block:</label>
+            <div class="filter-group">
+                <label for="globalMonthFilter" style="font-weight:bold; font-size:13px; color:var(--primary-blue);">Period:</label>
                 <select id="globalMonthFilter" class="select-input" onchange="renderAdminPanels()">
-                    <option value="2026-05">May 2026</option>
-                    <option value="2026-06" selected>June 2026</option>
-                    <option value="2026-07">July 2026</option>
+                    <option value="01">January</option>
+                    <option value="02">February</option>
+                    <option value="03">March</option>
+                    <option value="04">April</option>
+                    <option value="05">May</option>
+                    <option value="06" selected>June</option>
+                    <option value="07">July</option>
+                    <option value="08">August</option>
+                    <option value="09">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+                <select id="globalYearFilter" class="select-input" onchange="renderAdminPanels()">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
                 </select>
             </div>
             <div style="font-size: 12px; color: var(--ocean-blue);">Role Authority: <strong>Logistics Administrator</strong></div>
@@ -132,20 +149,22 @@
             renderAdminPanels();
         }
 
-        /* Pulls fresh copies generated or modified under user context seamlessly */
         function renderAdminPanels() {
-            const selectedMonth = document.getElementById('globalMonthFilter').value;
-            const selectOptions = document.getElementById('globalMonthFilter');
-            document.getElementById('summaryMonthLabel').innerText = selectOptions.options[selectOptions.selectedIndex].text;
+            const mVal = document.getElementById('globalMonthFilter').value;
+            const yVal = document.getElementById('globalYearFilter').value;
+            const selectedMonthGroup = `${yVal}-${mVal}`;
+
+            const mText = document.getElementById('globalMonthFilter').options[document.getElementById('globalMonthFilter').selectedIndex].text;
+            document.getElementById('summaryMonthLabel').innerText = `${mText} ${yVal}`;
 
             const db = getDB();
-            const monthRequests = db.filter(r => r.monthGroup === selectedMonth);
+            const monthRequests = db.filter(r => r.monthGroup === selectedMonthGroup);
 
             const approvalBody = document.getElementById('adminApprovalTable').getElementsByTagName('tbody')[0];
             approvalBody.innerHTML = '';
 
             if(monthRequests.length === 0) {
-                approvalBody.innerHTML = `<tr><td colspan="6" class="empty-row-msg">No submissions currently recorded for this month.</td></tr>`;
+                approvalBody.innerHTML = `<tr><td colspan="6" class="empty-row-msg">No submissions currently recorded for this period.</td></tr>`;
             } else {
                 monthRequests.forEach(req => {
                     const row = approvalBody.insertRow();
@@ -185,7 +204,7 @@
             const monthApprovedTotal = db.filter(r => r.monthGroup === target.monthGroup && r.status === 'approved').reduce((sum, i) => sum + i.cost, 0);
 
             if((monthApprovedTotal + target.cost) > BUDGET_LIMIT) {
-                alert(`OVER BUDGET REJECTION:\nApproving this item costing ₱${target.cost.toFixed(2)} breaches the ₱14,000 ceiling limits.\nAvailable balance left: ₱${(BUDGET_LIMIT - monthApprovedTotal).toFixed(2)}.`);
+                alert(`OVER BUDGET REJECTION:\nApproving this item costing ₱${target.cost.toFixed(2)} breaches the ₱14,000 allowance pool ceiling.\nAvailable balance left: ₱${(BUDGET_LIMIT - monthApprovedTotal).toFixed(2)}.`);
                 return;
             }
 
