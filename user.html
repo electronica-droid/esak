@@ -8,6 +8,7 @@
         :root {
             --primary-blue: #0A2540;
             --ocean-blue: #0073CF;
+            --secondary-blue: #1E3A8A;
             --light-bg: #F4F6F9;
             --white: #FFFFFF;
             --gray-text: #4A5568;
@@ -41,34 +42,7 @@
         .radio-group { display: flex; gap: 20px; padding-top: 5px; }
         .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         
-        /* Submit Container Styling */
-        .submit-container {
-            width: 100%;
-            min-height: 50px;
-            padding: 5px;
-            border: 2px dashed #CBD5E1;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background-color: #F8FAFC;
-            transition: all 0.3s ease;
-        }
-
-        .submit-container::before {
-            content: "Hover here to reveal Submit Button";
-            font-size: 13px;
-            color: var(--gray-text);
-            font-weight: 600;
-        }
-
-        /* Hide prompt text on hover OR during active submission state */
-        .submit-container:hover::before,
-        .submit-container.is-submitting::before {
-            display: none;
-        }
-
+        /* Standard Visible Submit Button */
         .btn-submit {
             background-color: var(--ocean-blue);
             color: var(--white);
@@ -80,20 +54,12 @@
             border-radius: 4px;
             cursor: pointer;
             width: 100%;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.2s ease;
-        }
-
-        /* Reveal submit button when hovering over the container OR when processing submission */
-        .submit-container:hover .btn-submit,
-        .submit-container.is-submitting .btn-submit {
-            opacity: 1;
-            visibility: visible;
+            display: block;
+            transition: background-color 0.2s ease;
         }
 
         .btn-submit.mode-edit { background-color: #D97706; }
-        .btn-submit:hover { background-color: #0A2540; }
+        .btn-submit:hover { background-color: var(--secondary-blue); }
         
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
         .status-badge.pending { background-color: #FEF3C7; color: #D97706; }
@@ -186,10 +152,7 @@
                 </div>
                 <div class="form-group"><label for="purpose">Purpose of Official Mission</label><textarea id="purpose" required placeholder="Detail usage parameters..."></textarea></div>
                 
-                <!-- Hover/Active Container -->
-                <div class="submit-container" id="submitBtnWrapper">
-                    <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
-                </div>
+                <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
             </form>
         </div>
 
@@ -239,11 +202,7 @@
         function handleFormSubmit(e) {
             e.preventDefault();
 
-            const wrapper = document.getElementById('submitBtnWrapper');
             const submitBtn = document.getElementById('submitFormBtn');
-
-            // Force visibility and indicate active loading/submitting state
-            wrapper.classList.add('is-submitting');
             const originalBtnText = submitBtn.innerText;
             submitBtn.innerText = "Submitting Request...";
 
@@ -306,10 +265,7 @@
             document.getElementById('fuelRequestForm').reset();
             setCurrentDate();
 
-            // Reset submit button state
             submitBtn.innerText = "Submit Fuel Request";
-            wrapper.classList.remove('is-submitting');
-
             switchTab('tab-approval');
         }
 
