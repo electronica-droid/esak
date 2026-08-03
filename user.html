@@ -41,7 +41,54 @@
         .radio-group { display: flex; gap: 20px; padding-top: 5px; }
         .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         
-        .btn-submit { background-color: var(--ocean-blue); color: var(--white); border: none; padding: 12px 24px; font-size: 14px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; width: 100%; transition: background-color 0.2s; }
+        /* Submit Container with Hover Trigger */
+        .submit-container {
+            width: 100%;
+            min-height: 50px;
+            padding: 5px;
+            border: 2px dashed #CBD5E1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: #F8FAFC;
+            transition: all 0.3s ease;
+        }
+
+        .submit-container::before {
+            content: " Hover here to reveal Submit Button";
+            font-size: 13px;
+            color: var(--gray-text);
+            font-weight: 600;
+        }
+
+        .submit-container:hover::before {
+            display: none;
+        }
+
+        .btn-submit {
+            background-color: var(--ocean-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.2s ease;
+        }
+
+        /* Reveal submit button when hovering over the container */
+        .submit-container:hover .btn-submit {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .btn-submit.mode-edit { background-color: #D97706; }
         .btn-submit:hover { background-color: var(--secondary-blue); }
         
@@ -135,7 +182,11 @@
                     </div>
                 </div>
                 <div class="form-group"><label for="purpose">Purpose of Official Mission</label><textarea id="purpose" required placeholder="Detail usage parameters..."></textarea></div>
-                <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
+                
+                <!-- Hover-activated container -->
+                <div class="submit-container">
+                    <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
+                </div>
             </form>
         </div>
 
@@ -185,10 +236,6 @@
         function handleFormSubmit(e) {
             e.preventDefault();
 
-            // Make submit button non-visible immediately on click
-            const submitBtn = document.getElementById('submitFormBtn');
-            submitBtn.style.display = 'none';
-
             const db = getDB();
             const dateVal = new Date().toISOString().split('T')[0];
             document.getElementById('requestDate').value = dateVal;
@@ -218,6 +265,7 @@
                 
                 document.getElementById('editRecordTargetId').value = "";
                 document.getElementById('editFormModeBanner').style.display = "none";
+                const submitBtn = document.getElementById('submitFormBtn');
                 submitBtn.className = "btn-submit";
                 submitBtn.innerText = "Submit Fuel Request";
                 document.getElementById('formPanelTitle').innerText = "Fuel Requisition Form";
@@ -249,9 +297,6 @@
             document.getElementById('fuelRequestForm').reset();
             setCurrentDate();
 
-            // Restore submit button visibility after switching tabs/completing form reset
-            submitBtn.style.display = 'block';
-
             switchTab('tab-approval');
         }
 
@@ -273,7 +318,6 @@
 
             document.getElementById('editFormModeBanner').style.display = "block";
             const submitBtn = document.getElementById('submitFormBtn');
-            submitBtn.style.display = 'block'; // Ensure button is visible when entering edit mode
             submitBtn.className = "btn-submit mode-edit";
             submitBtn.innerText = "Save Modified Request Changes";
             document.getElementById('formPanelTitle').innerText = `Modifying Request Entry (${target.reqId})`;
