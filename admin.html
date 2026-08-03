@@ -75,7 +75,7 @@
                     <option value="03">March</option>
                     <option value="04">April</option>
                     <option value="05">May</option>
-                    <option value="06" selected>June</option>
+                    <option value="06">June</option>
                     <option value="07">July</option>
                     <option value="08">August</option>
                     <option value="09">September</option>
@@ -86,7 +86,7 @@
                 <select id="globalYearFilter" class="select-input" onchange="renderAdminPanels()">
                     <option value="2024">2024</option>
                     <option value="2025">2025</option>
-                    <option value="2026" selected>2026</option>
+                    <option value="2026">2026</option>
                     <option value="2027">2027</option>
                     <option value="2028">2028</option>
                 </select>
@@ -131,10 +131,16 @@
     <script>
         const BUDGET_LIMIT = 14000.00;
 
+        // Auto-set default selectors to current month/year on load
+        const todayStr = new Date().toISOString().split('T')[0];
+        const [curY, curM] = todayStr.split('-');
+        document.getElementById('globalYearFilter').value = curY;
+        document.getElementById('globalMonthFilter').value = curM;
+
         function getDB() { 
             if(!localStorage.getItem('pcg_fuel_db')) {
                 localStorage.setItem('pcg_fuel_db', JSON.stringify([
-                    { id: 'mock-1', reqId: '#2026-001', monthGroup: '2026-06', vesselVehicle: 'SJA-1234 (Vehicle)', fuelType: 'Gasoline', quantity: 80, cost: 5200.00, status: 'pending', date: '2026-06-20', description: 'Gasoline Request - SJA-1234' }
+                    { id: 'mock-1', reqId: `#${curY}-001`, monthGroup: `${curY}-${curM}`, vesselVehicle: 'SJA-1234 (Vehicle)', fuelType: 'Gasoline', quantity: 80, cost: 5200.00, status: 'pending', date: todayStr, description: 'Gasoline Request - SJA-1234' }
                 ]));
             }
             return JSON.parse(localStorage.getItem('pcg_fuel_db')); 
