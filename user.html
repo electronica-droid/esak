@@ -41,7 +41,7 @@
         .radio-group { display: flex; gap: 20px; padding-top: 5px; }
         .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         
-        /* Submit Container with Hover Trigger */
+        /* Submit Container Styling */
         .submit-container {
             width: 100%;
             min-height: 50px;
@@ -57,13 +57,15 @@
         }
 
         .submit-container::before {
-            content: " Hover here to reveal Submit Button";
+            content: "Hover here to reveal Submit Button";
             font-size: 13px;
             color: var(--gray-text);
             font-weight: 600;
         }
 
-        .submit-container:hover::before {
+        /* Hide prompt text on hover OR during active submission state */
+        .submit-container:hover::before,
+        .submit-container.is-submitting::before {
             display: none;
         }
 
@@ -83,14 +85,15 @@
             transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.2s ease;
         }
 
-        /* Reveal submit button when hovering over the container */
-        .submit-container:hover .btn-submit {
+        /* Reveal submit button when hovering over the container OR when processing submission */
+        .submit-container:hover .btn-submit,
+        .submit-container.is-submitting .btn-submit {
             opacity: 1;
             visibility: visible;
         }
 
         .btn-submit.mode-edit { background-color: #D97706; }
-        .btn-submit:hover { background-color: var(--secondary-blue); }
+        .btn-submit:hover { background-color: #0A2540; }
         
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
         .status-badge.pending { background-color: #FEF3C7; color: #D97706; }
@@ -183,8 +186,8 @@
                 </div>
                 <div class="form-group"><label for="purpose">Purpose of Official Mission</label><textarea id="purpose" required placeholder="Detail usage parameters..."></textarea></div>
                 
-                <!-- Hover-activated container -->
-                <div class="submit-container">
+                <!-- Hover/Active Container -->
+                <div class="submit-container" id="submitBtnWrapper">
                     <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
                 </div>
             </form>
@@ -236,6 +239,14 @@
         function handleFormSubmit(e) {
             e.preventDefault();
 
+            const wrapper = document.getElementById('submitBtnWrapper');
+            const submitBtn = document.getElementById('submitFormBtn');
+
+            // Force visibility and indicate active loading/submitting state
+            wrapper.classList.add('is-submitting');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Submitting Request...";
+
             const db = getDB();
             const dateVal = new Date().toISOString().split('T')[0];
             document.getElementById('requestDate').value = dateVal;
@@ -265,9 +276,7 @@
                 
                 document.getElementById('editRecordTargetId').value = "";
                 document.getElementById('editFormModeBanner').style.display = "none";
-                const submitBtn = document.getElementById('submitFormBtn');
                 submitBtn.className = "btn-submit";
-                submitBtn.innerText = "Submit Fuel Request";
                 document.getElementById('formPanelTitle').innerText = "Fuel Requisition Form";
 
             } else {
@@ -296,6 +305,10 @@
 
             document.getElementById('fuelRequestForm').reset();
             setCurrentDate();
+
+            // Reset submit button state
+            submitBtn.innerText = "Submit Fuel Request";
+            wrapper.classList.remove('is-submitting');
 
             switchTab('tab-approval');
         }
