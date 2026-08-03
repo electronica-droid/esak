@@ -131,7 +131,6 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="requestDate">Date of Request (Current Date Auto-Locked)</label>
-                        <!-- Non-editable current date input -->
                         <input type="date" id="requestDate" required readonly style="background-color: #E2E8F0; cursor: not-allowed; font-weight: bold; color: var(--primary-blue);">
                     </div>
                 </div>
@@ -153,12 +152,10 @@
     </div>
 
     <script>
-        // Set the requested date field strictly to today's date
         function setCurrentDate() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('requestDate').value = today;
 
-            // Set default filters to current month & year
             const [yCurrent, mCurrent] = today.split('-');
             if (!document.getElementById('editRecordTargetId').value) {
                 document.getElementById('globalYearFilter').value = yCurrent;
@@ -187,13 +184,16 @@
 
         function handleFormSubmit(e) {
             e.preventDefault();
+
+            // Make submit button non-visible immediately on click
+            const submitBtn = document.getElementById('submitFormBtn');
+            submitBtn.style.display = 'none';
+
             const db = getDB();
-            
-            // Always lock date to system current date
             const dateVal = new Date().toISOString().split('T')[0];
             document.getElementById('requestDate').value = dateVal;
             
-            const transactionMonth = dateVal.substring(0, 7); // YYYY-MM
+            const transactionMonth = dateVal.substring(0, 7);
             const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
             const vehicleVal = document.getElementById('vesselVehicle').value;
 
@@ -218,8 +218,8 @@
                 
                 document.getElementById('editRecordTargetId').value = "";
                 document.getElementById('editFormModeBanner').style.display = "none";
-                document.getElementById('submitFormBtn').className = "btn-submit";
-                document.getElementById('submitFormBtn').innerText = "Submit Fuel Request";
+                submitBtn.className = "btn-submit";
+                submitBtn.innerText = "Submit Fuel Request";
                 document.getElementById('formPanelTitle').innerText = "Fuel Requisition Form";
 
             } else {
@@ -248,6 +248,10 @@
 
             document.getElementById('fuelRequestForm').reset();
             setCurrentDate();
+
+            // Restore submit button visibility after switching tabs/completing form reset
+            submitBtn.style.display = 'block';
+
             switchTab('tab-approval');
         }
 
@@ -268,8 +272,10 @@
             document.getElementById('estimatedCost').value = target.cost.toFixed(2);
 
             document.getElementById('editFormModeBanner').style.display = "block";
-            document.getElementById('submitFormBtn').className = "btn-submit mode-edit";
-            document.getElementById('submitFormBtn').innerText = "Save Modified Request Changes";
+            const submitBtn = document.getElementById('submitFormBtn');
+            submitBtn.style.display = 'block'; // Ensure button is visible when entering edit mode
+            submitBtn.className = "btn-submit mode-edit";
+            submitBtn.innerText = "Save Modified Request Changes";
             document.getElementById('formPanelTitle').innerText = `Modifying Request Entry (${target.reqId})`;
 
             switchTab('tab-request');
