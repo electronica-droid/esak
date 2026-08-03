@@ -22,7 +22,8 @@
         .header-text h1 { font-size: 22px; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 0.5px; }
         .header-text h2 { font-size: 15px; color: var(--ocean-blue); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
         
-        .controls-bar { background-color: #F8FAFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .controls-bar { background-color: #F8FAFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .filter-group { display: flex; align-items: center; gap: 8px; }
         .select-input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-weight: 600; color: var(--primary-blue); background: var(--white); }
         
         .tabs-nav { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; gap: 5px; }
@@ -71,12 +72,28 @@
         </div>
 
         <div class="controls-bar">
-            <div>
-                <label for="globalMonthFilter" style="font-weight:bold; font-size:13px; color:var(--primary-blue);">View Tracked Month:</label>
+            <div class="filter-group">
+                <label for="globalMonthFilter" style="font-weight:bold; font-size:13px; color:var(--primary-blue);">Period:</label>
                 <select id="globalMonthFilter" class="select-input" onchange="renderApprovalTable()">
-                    <option value="2026-05">May 2026</option>
-                    <option value="2026-06" selected>June 2026</option>
-                    <option value="2026-07">July 2026</option>
+                    <option value="01">January</option>
+                    <option value="02">February</option>
+                    <option value="03">March</option>
+                    <option value="04">April</option>
+                    <option value="05">May</option>
+                    <option value="06" selected>June</option>
+                    <option value="07">July</option>
+                    <option value="08">August</option>
+                    <option value="09">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+                <select id="globalYearFilter" class="select-input" onchange="renderApprovalTable()">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
                 </select>
             </div>
             <div style="font-size: 12px; color: var(--gray-text);">Role Context: <strong>Requesting Party</strong></div>
@@ -93,12 +110,11 @@
             <div class="edit-alert-banner" id="editFormModeBanner">⚠️ PORTAL NOTICE: Currently Editing Existing Fuel Entry Request.</div>
             
             <form id="fuelRequestForm" onsubmit="handleFormSubmit(event)">
-                <!-- Hidden track field element -->
                 <input type="hidden" id="editRecordTargetId" value="">
 
                 <div class="form-row">
-                    <div class="form-group"><label for="officerName">Requesting Personnel / Officer</label><input type="text" id="officerName" required placeholder="e.g., ENS Juan Dela Cruz"></div>
-                    <div class="form-group"><label for="officerRank">Rank / Designation</label><input type="text" id="officerRank" required placeholder="e.g., Instructor / Logistics Officer"></div>
+                    <div class="form-group"><label for="officerName">Requesting Personnel</label><input type="text" id="officerName" required placeholder="e.g., ENS Juan Dela Cruz"></div>
+                    <div class="form-group"><label for="officerRank">Rank / Designation</label><input type="text" id="officerRank" required placeholder="e.g., Instructor / Logistics Staff"></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label for="unitStation">Branch / Section</label><input type="text" id="unitStation" required placeholder="e.g., Training Support Branch"></div>
@@ -156,14 +172,13 @@
             e.preventDefault();
             const db = getDB();
             const dateVal = document.getElementById('requestDate').value;
-            const transactionMonth = dateVal.substring(0, 7);
+            const transactionMonth = dateVal.substring(0, 7); // Extracts YYYY-MM
             const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
             const vehicleVal = document.getElementById('vesselVehicle').value;
 
             const editIdId = document.getElementById('editRecordTargetId').value;
 
             if(editIdId) {
-                // Update processing pipeline path
                 const itemIndex = db.findIndex(r => r.id === editIdId);
                 if(itemIndex !== -1 && db[itemIndex].status === 'pending') {
                     db[itemIndex].vesselVehicle = vehicleVal;
@@ -180,7 +195,6 @@
                     alert("Error: Record has locked context modifications.");
                 }
                 
-                // Tear down edit states elements safely
                 document.getElementById('editRecordTargetId').value = "";
                 document.getElementById('editFormModeBanner').style.display = "none";
                 document.getElementById('submitFormBtn').className = "btn-submit";
@@ -188,10 +202,10 @@
                 document.getElementById('formPanelTitle').innerText = "Fuel Requisition Form";
 
             } else {
-                // Standard compilation initialization process route 
+                const reqYear = dateVal.substring(0, 4);
                 const newRequest = {
                     id: 'id-' + Date.now(),
-                    reqId: `#2026-${String(db.length + 1).padStart(3, '0')}`, // Omitted alpha prefix text
+                    reqId: `#${reqYear}-${String(db.length + 1).padStart(3, '0')}`,
                     monthGroup: transactionMonth,
                     vesselVehicle: vehicleVal,
                     fuelType: fuelSelected,
@@ -207,7 +221,11 @@
                 alert(`Success! Requisition ${newRequest.reqId} generated.`);
             }
 
-            document.getElementById('globalMonthFilter').value = transactionMonth;
+            // Sync top filters to newly submitted record's month & year
+            const [yPart, mPart] = transactionMonth.split('-');
+            document.getElementById('globalYearFilter').value = yPart;
+            document.getElementById('globalMonthFilter').value = mPart;
+
             document.getElementById('fuelRequestForm').reset();
             document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
             switchTab('tab-approval');
@@ -218,7 +236,6 @@
             const target = db.find(r => r.id === recordId);
             if(!target || target.status !== 'pending') return;
 
-            // Load values back into fields
             document.getElementById('editRecordTargetId').value = target.id;
             document.getElementById('vesselVehicle').value = target.vesselVehicle;
             document.getElementById('quantity').value = target.quantity;
@@ -226,13 +243,11 @@
             if(target.fuelType === "Gasoline") document.getElementById('fuelGas').checked = true;
             else document.getElementById('fuelDies').checked = true;
 
-            // Pull standard price baseline backward calculations
             const parsedPrice = target.cost / target.quantity;
             document.getElementById('fuelPrice').value = parsedPrice.toFixed(2);
             document.getElementById('estimatedCost').value = target.cost.toFixed(2);
             document.getElementById('requestDate').value = target.date;
 
-            // Transform layout styling components dynamically
             document.getElementById('editFormModeBanner').style.display = "block";
             document.getElementById('submitFormBtn').className = "btn-submit mode-edit";
             document.getElementById('submitFormBtn').innerText = "Save Modified Request Changes";
@@ -242,11 +257,14 @@
         }
 
         function renderApprovalTable() {
-            const selectedMonth = document.getElementById('globalMonthFilter').value;
+            const mVal = document.getElementById('globalMonthFilter').value;
+            const yVal = document.getElementById('globalYearFilter').value;
+            const selectedMonthGroup = `${yVal}-${mVal}`;
+
             const tbody = document.getElementById('approvalTable').getElementsByTagName('tbody')[0];
             tbody.innerHTML = '';
             
-            const filtered = getDB().filter(r => r.monthGroup === selectedMonth);
+            const filtered = getDB().filter(r => r.monthGroup === selectedMonthGroup);
             if(filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="empty-row-msg">No requisitions tracked for this accounting period.</td></tr>`;
                 return;
