@@ -14,6 +14,7 @@
             --border-color: #E2E8F0;
             --success-green: #10B981;
             --accent-gold: #D4AF37;
+            --danger-red: #EF4444;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--light-bg); color: #333; padding: 20px; }
@@ -35,10 +36,19 @@
         
         .section-title { font-size: 16px; color: var(--primary-blue); border-left: 5px solid var(--ocean-blue); padding-left: 10px; margin-bottom: 20px; text-transform: uppercase; font-weight: bold; }
         
+        /* Status Badges */
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
         .status-badge.pending { background-color: #FEF3C7; color: #D97706; cursor: pointer; border: 1px solid #F59E0B; }
         .status-badge.pending:hover { background-color: #F59E0B; color: white; }
         .status-badge.approved { background-color: #D1FAE5; color: #059669; }
+        .status-badge.disapproved { background-color: #FEE2E2; color: #DC2626; }
+        
+        /* Action Links */
+        .action-link { font-weight: bold; text-decoration: none; cursor: pointer; font-size: 12px; margin-left: 6px; }
+        .action-link.disapprove { color: #DC2626; }
+        .action-link.disapprove:hover { text-decoration: underline; color: #991B1B; }
+        .action-link.delete { color: var(--gray-text); }
+        .action-link.delete:hover { text-decoration: underline; color: #000; }
         
         .portal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .portal-table th, .portal-table td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
@@ -102,7 +112,7 @@
         <!-- TAB 1: Authorization Actions -->
         <div id="tab-approval" class="tab-panel active">
             <div class="section-title">Incoming Institute Requisitions Ledger</div>
-            <p style="font-size:13px; color:var(--gray-text); margin-bottom:15px;">Review operational entries below. Click a yellow <strong>Pending</strong> token to process authorization and debit the monthly institute allocation.</p>
+            <p style="font-size:13px; color:var(--gray-text); margin-bottom:15px;">Review operational entries below. You can <strong>Approve</strong>, <strong>Disapprove</strong>, or <strong>Delete</strong> any record.</p>
             <table class="portal-table" id="adminApprovalTable">
                 <thead><tr><th>Req ID</th><th>Vessel/Vehicle</th><th>Fuel Type</th><th>Volume</th><th>Total Cost</th><th>Action Handlers</th></tr></thead>
                 <tbody></tbody>
@@ -131,7 +141,6 @@
     <script>
         const BUDGET_LIMIT = 14000.00;
 
-        // Auto-set default selectors to current month/year on load
         const todayStr = new Date().toISOString().split('T')[0];
         const [curY, curM] = todayStr.split('-');
         document.getElementById('globalYearFilter').value = curY;
@@ -174,9 +183,26 @@
             } else {
                 monthRequests.forEach(req => {
                     const row = approvalBody.insertRow();
-                    const actionCell = req.status === 'pending' 
-                        ? `<span class="status-badge pending" onclick="executeApproval('${req.id}')">Pending (Click Approve)</span>`
-                        : `<span class="status-badge approved">Approved</span>`;
+                    let actionCell = '';
+
+                    if (req.status === 'pending') {
+                        actionCell = `
+                            <span class="status-badge pending" onclick="executeApproval('${req.id}')" title="Click to Approve">Pending (Approve)</span>
+                            <a class="action-link disapprove" onclick="executeDisapproval('${req.id}')">Disapprove</a>
+                            <a class="action-link delete" onclick="executeDelete('${req.id}')">Delete</a>
+                        `;
+                    } else if (req.status === 'approved') {
+                        actionCell = `
+                            <span class="status-badge approved">Approved</span>
+                            <a class="action-link delete" onclick="executeDelete('${req.id}')">Delete</a>
+                        `;
+                    } else if (req.status === 'disapproved') {
+                        actionCell = `
+                            <span class="status-badge disapproved">Disapproved</span>
+                            <a class="action-link delete" onclick="executeDelete('${req.id}')">Delete</a>
+                        `;
+                    }
+
                     row.innerHTML = `<td><strong>${req.reqId}</strong></td><td>${req.vesselVehicle}</td><td>${req.fuelType}</td><td>${req.quantity} L</td><td>₱${req.cost.toLocaleString(undefined, {minimumFractionDigits:2})}</td><td>${actionCell}</td>`;
                 });
             }
@@ -218,6 +244,32 @@
             saveDB(db);
             alert(`SUCCESS:\nRequisition ${target.reqId} authorized.`);
             renderAdminPanels();
+        }
+
+        function executeDisapproval(recordId) {
+            const db = getDB();
+            const target = db.find(r => r.id === recordId);
+            if(!target) return;
+
+            if (confirm(`Are you sure you want to DISAPPROVE requisition ${target.reqId}?`)) {
+                target.status = 'disapproved';
+                saveDB(db);
+                alert(`Requisition ${target.reqId} has been disapproved.`);
+                renderAdminPanels();
+            }
+        }
+
+        function executeDelete(recordId) {
+            let db = getDB();
+            const target = db.find(r => r.id === recordId);
+            if(!target) return;
+
+            if (confirm(`Are you sure you want to DELETE request ${target.reqId}? This action cannot be undone.`)) {
+                db = db.filter(r => r.id !== recordId);
+                saveDB(db);
+                alert(`Request ${target.reqId} deleted successfully.`);
+                renderAdminPanels();
+            }
         }
 
         renderAdminPanels();
