@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CGWCEIS Training Institute - User Fuel Portal</title>
+    
+    <!-- EmailJS SDK Integration -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            // Initialize EmailJS with your Public Key
+            // Replace 'YOUR_PUBLIC_KEY' with your actual EmailJS Public Key
+            emailjs.init("YOUR_PUBLIC_KEY");
+        })();
+    </script>
+
     <style>
         :root {
             --primary-blue: #0A2540;
@@ -42,7 +53,6 @@
         .radio-group { display: flex; gap: 20px; padding-top: 5px; }
         .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         
-        /* Standard Visible Submit Button */
         .btn-submit {
             background-color: var(--ocean-blue);
             color: var(--white);
@@ -55,6 +65,7 @@
             cursor: pointer;
             width: 100%;
             display: block;
+            margin-top: 10px;
             transition: background-color 0.2s ease;
         }
 
@@ -64,6 +75,7 @@
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
         .status-badge.pending { background-color: #FEF3C7; color: #D97706; }
         .status-badge.approved { background-color: #D1FAE5; color: #059669; }
+        .status-badge.disapproved { background-color: #FEE2E2; color: #DC2626; }
         
         .btn-edit-link { color: #0073CF; font-weight: bold; text-decoration: none; cursor: pointer; font-size: 12px; margin-left: 10px; }
         .btn-edit-link:hover { text-decoration: underline; color: var(--primary-blue); }
@@ -169,6 +181,8 @@
     </div>
 
     <script>
+        const ADMIN_EMAIL = "arvin.araneta@gmail.com";
+
         function setCurrentDate() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('requestDate').value = today;
@@ -199,11 +213,35 @@
             if(tabId === 'tab-approval') renderApprovalTable();
         }
 
+        // Function to dispatch automated admin notifications via EmailJS
+        function sendAdminNotification(requestData) {
+            const templateParams = {
+                to_email: ADMIN_EMAIL,
+                req_id: requestData.reqId,
+                personnel: requestData.personnel,
+                rank: requestData.rank,
+                branch: requestData.branch,
+                vessel_vehicle: requestData.vesselVehicle,
+                fuel_type: requestData.fuelType,
+                quantity: requestData.quantity,
+                total_cost: requestData.cost,
+                date: requestData.date,
+                purpose: requestData.purpose
+            };
+
+            // Replace 'YOUR_SERVICE_ID' and 'YOUR_TEMPLATE_ID' with your EmailJS credentials
+            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+                .then(function(response) {
+                    console.log('Admin notification email sent successfully!', response.status, response.text);
+                }, function(error) {
+                    console.error('Failed to send admin notification email...', error);
+                });
+        }
+
         function handleFormSubmit(e) {
             e.preventDefault();
 
             const submitBtn = document.getElementById('submitFormBtn');
-            const originalBtnText = submitBtn.innerText;
             submitBtn.innerText = "Submitting Request...";
 
             const db = getDB();
@@ -213,21 +251,29 @@
             const transactionMonth = dateVal.substring(0, 7);
             const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
             const vehicleVal = document.getElementById('vesselVehicle').value;
+            const officerNameVal = document.getElementById('officerName').value;
+            const officerRankVal = document.getElementById('officerRank').value;
+            const unitStationVal = document.getElementById('unitStation').value;
+            const purposeVal = document.getElementById('purpose').value;
+            const quantityVal = parseFloat(document.getElementById('quantity').value);
+            const costVal = parseFloat(document.getElementById('estimatedCost').value);
 
             const editIdId = document.getElementById('editRecordTargetId').value;
+            let currentReqObj = null;
 
             if(editIdId) {
                 const itemIndex = db.findIndex(r => r.id === editIdId);
                 if(itemIndex !== -1 && db[itemIndex].status === 'pending') {
                     db[itemIndex].vesselVehicle = vehicleVal;
                     db[itemIndex].fuelType = fuelSelected;
-                    db[itemIndex].quantity = parseFloat(document.getElementById('quantity').value);
-                    db[itemIndex].cost = parseFloat(document.getElementById('estimatedCost').value);
+                    db[itemIndex].quantity = quantityVal;
+                    db[itemIndex].cost = costVal;
                     db[itemIndex].date = dateVal;
                     db[itemIndex].monthGroup = transactionMonth;
                     db[itemIndex].description = `${fuelSelected} Request - ${vehicleVal}`;
                     
                     saveDB(db);
+                    currentReqObj = db[itemIndex];
                     alert("Requisition changes written and synchronized successfully.");
                 } else {
                     alert("Error: Record has locked context modifications.");
@@ -240,22 +286,34 @@
 
             } else {
                 const reqYear = dateVal.substring(0, 4);
-                const newRequest = {
+                const generatedReqId = `#${reqYear}-${String(db.length + 1).padStart(3, '0')}`;
+                
+                newRequest = {
                     id: 'id-' + Date.now(),
-                    reqId: `#${reqYear}-${String(db.length + 1).padStart(3, '0')}`,
+                    reqId: generatedReqId,
                     monthGroup: transactionMonth,
                     vesselVehicle: vehicleVal,
                     fuelType: fuelSelected,
-                    quantity: parseFloat(document.getElementById('quantity').value),
-                    cost: parseFloat(document.getElementById('estimatedCost').value),
+                    quantity: quantityVal,
+                    cost: costVal,
                     status: 'pending',
                     date: dateVal,
+                    personnel: officerNameVal,
+                    rank: officerRankVal,
+                    branch: unitStationVal,
+                    purpose: purposeVal,
                     description: `${fuelSelected} Request - ${vehicleVal}`
                 };
 
                 db.push(newRequest);
                 saveDB(db);
+                currentReqObj = newRequest;
                 alert(`Success! Requisition ${newRequest.reqId} generated.`);
+            }
+
+            // Dispatch notification email to Administrator (arvin.araneta@gmail.com)
+            if (currentReqObj) {
+                sendAdminNotification(currentReqObj);
             }
 
             const [yPart, mPart] = transactionMonth.split('-');
@@ -277,6 +335,10 @@
             document.getElementById('editRecordTargetId').value = target.id;
             document.getElementById('vesselVehicle').value = target.vesselVehicle;
             document.getElementById('quantity').value = target.quantity;
+            document.getElementById('officerName').value = target.personnel || '';
+            document.getElementById('officerRank').value = target.rank || '';
+            document.getElementById('unitStation').value = target.branch || '';
+            document.getElementById('purpose').value = target.purpose || '';
             
             if(target.fuelType === "Gasoline") document.getElementById('fuelGas').checked = true;
             else document.getElementById('fuelDies').checked = true;
@@ -310,10 +372,20 @@
 
             filtered.forEach(req => {
                 const row = tbody.insertRow();
-                const badgeClass = req.status === 'pending' ? 'pending' : 'approved';
+                let badgeClass = 'pending';
+                let statusLabel = 'Pending Review';
+                
+                if (req.status === 'approved') {
+                    badgeClass = 'approved';
+                    statusLabel = 'Approved';
+                } else if (req.status === 'disapproved') {
+                    badgeClass = 'disapproved';
+                    statusLabel = 'Disapproved';
+                }
+
                 const actionMarkupLink = req.status === 'pending' 
                     ? `<a class="btn-edit-link" onclick="triggerEditMode('${req.id}')">Modify Info</a>` 
-                    : `<span style="font-size:11px; color:var(--gray-text); font-style:italic;">Locked (Approved)</span>`;
+                    : `<span style="font-size:11px; color:var(--gray-text); font-style:italic;">Locked (${statusLabel})</span>`;
 
                 row.innerHTML = `
                     <td><strong>${req.reqId}</strong></td>
@@ -321,7 +393,7 @@
                     <td>${req.fuelType}</td>
                     <td>${req.quantity} L</td>
                     <td>₱${req.cost.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                    <td><span class="status-badge ${badgeClass}">${req.status === 'pending' ? 'Pending Review' : 'Approved'}</span></td>
+                    <td><span class="status-badge ${badgeClass}">${statusLabel}</span></td>
                     <td>${actionMarkupLink}</td>
                 `;
             });
