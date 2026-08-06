@@ -129,15 +129,15 @@
 
         // Updated databaseURL specifically targeting us-central1 regional endpoint
         const firebaseConfig = {
-            apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
-            authDomain: "pcg-fuel-portal.firebaseapp.com",
-            databaseURL: "https://pcg-fuel-portal-default-rtdb.us-central1.firebasedatabase.app",
-            projectId: "pcg-fuel-portal",
-            storageBucket: "pcg-fuel-portal.firebasestorage.app",
-            messagingSenderId: "889165377012",
-            appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1",
-            measurementId: "G-6HMR6EK33N"
-        };
+  apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
+  authDomain: "pcg-fuel-portal.firebaseapp.com",
+  databaseURL: "https://pcg-fuel-portal-default-rtdb.firebaseio.com",
+  projectId: "pcg-fuel-portal",
+  storageBucket: "pcg-fuel-portal.firebasestorage.app",
+  messagingSenderId: "889165377012",
+  appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1",
+  measurementId: "G-6HMR6EK33N"
+};
 
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
