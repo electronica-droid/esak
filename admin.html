@@ -120,7 +120,7 @@
         <div class="footer"><p>© 2026 CGWCEIS Training Institute. All Rights Reserved.</p></div>
     </div>
 
-    <!-- Firebase v8 Compatibility Libraries -->
+    <!-- Firebase Web SDK (v8 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -137,7 +137,9 @@
             appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database().ref('fuel_requests');
 
         let allRequests = [];
@@ -157,6 +159,8 @@
                 });
             }
             renderAdminPanels();
+        }, (error) => {
+            console.error("Database error:", error);
         });
 
         function applyFilter() {
@@ -247,24 +251,16 @@
                 }
             }
 
-            db.child(reqId).update({ status: newStatus }, (error) => {
-                if (error) {
-                    alert("Sync Error: " + error.message);
-                } else {
-                    alert(`Status updated to ${newStatus.toUpperCase()}!`);
-                }
-            });
+            db.child(reqId).update({ status: newStatus })
+                .then(() => alert(`Status updated to ${newStatus.toUpperCase()}!`))
+                .catch((error) => alert("Sync Error: " + error.message));
         }
 
         function deleteReq(reqId) {
             if (confirm("Permanently delete this requisition record from the cloud database?")) {
-                db.child(reqId).remove((error) => {
-                    if (error) {
-                        alert("Delete Error: " + error.message);
-                    } else {
-                        alert("Record deleted successfully.");
-                    }
-                });
+                db.child(reqId).remove()
+                    .then(() => alert("Record deleted successfully."))
+                    .catch((error) => alert("Delete Error: " + error.message));
             }
         }
     </script>
