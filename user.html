@@ -403,5 +403,114 @@
         }
         renderApprovalTable();
     </script>
+    <!-- Include Firebase Libraries -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    
+    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
+  authDomain: "pcg-fuel-portal.firebaseapp.com",
+  projectId: "pcg-fuel-portal",
+  storageBucket: "pcg-fuel-portal.firebasestorage.app",
+  messagingSenderId: "889165377012",
+  appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1",
+  measurementId: "G-6HMR6EK33N"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref('fuel_requests');
+
+    // Auto-set locked request date
+    document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+
+    // Calculate Total Cost
+    function calculateTotalCost() {
+        const qty = parseFloat(document.getElementById('quantity').value) || 0;
+        const price = parseFloat(document.getElementById('fuelPrice').value) || 0;
+        document.getElementById('estimatedCost').value = (qty * price).toFixed(2);
+    }
+
+    // Handle multi-user submission to Cloud DB
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitFormBtn');
+        submitBtn.innerText = "Submitting to Cloud...";
+
+        const dateVal = new Date().toISOString().split('T')[0];
+        const transactionMonth = dateVal.substring(0, 7);
+        const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
+        const vehicleVal = document.getElementById('vesselVehicle').value;
+
+        // Push new record directly to Cloud DB (Generates unique global ID)
+        const newReqRef = db.push();
+        const newRequest = {
+            id: newReqRef.key,
+            reqId: `#${dateVal.substring(0,4)}-${Math.floor(1000 + Math.random() * 9000)}`,
+            monthGroup: transactionMonth,
+            vesselVehicle: vehicleVal,
+            fuelType: fuelSelected,
+            quantity: parseFloat(document.getElementById('quantity').value),
+            cost: parseFloat(document.getElementById('estimatedCost').value),
+            status: 'pending',
+            date: dateVal,
+            personnel: document.getElementById('officerName').value,
+            rank: document.getElementById('officerRank').value,
+            branch: document.getElementById('unitStation').value,
+            purpose: document.getElementById('purpose').value
+        };
+
+        newReqRef.set(newRequest, (error) => {
+            if (error) {
+                alert("Error saving request to cloud: " + error.message);
+            } else {
+                alert(`Success! Requisition ${newRequest.reqId} sent to Admin.`);
+                document.getElementById('fuelRequestForm').reset();
+                document.getElementById('requestDate').value = dateVal;
+            }
+            submitBtn.innerText = "Submit Fuel Request";
+        });
+    }
+
+    // Real-Time Listener: Automatically updates table for all simultaneous users
+    db.on('value', (snapshot) => {
+        const tbody = document.getElementById('approvalTable').getElementsByTagName('tbody')[0];
+        tbody.innerHTML = '';
+        
+        if (!snapshot.exists()) {
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-row-msg">No requisitions tracked.</td></tr>`;
+            return;
+        }
+
+        snapshot.forEach((childSnapshot) => {
+            const req = childSnapshot.val();
+            const row = tbody.insertRow(0); // Show newest first
+            const badgeClass = req.status === 'approved' ? 'approved' : (req.status === 'disapproved' ? 'disapproved' : 'pending');
+
+            row.innerHTML = `
+                <td><strong>${req.reqId}</strong></td>
+                <td>${req.vesselVehicle}</td>
+                <td>${req.fuelType}</td>
+                <td>${req.quantity} L</td>
+                <td>₱${req.cost.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                <td><span class="status-badge ${badgeClass}">${req.status}</span></td>
+                <td><span style="font-size:11px; color:#4A5568; font-style:italic;">Synced</span></td>
+            `;
+        });
+    });
+</script>
 </body>
 </html>
