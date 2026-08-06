@@ -153,7 +153,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
             authDomain: "pcg-fuel-portal.firebaseapp.com",
@@ -164,13 +163,11 @@
             appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database().ref('fuel_requests');
 
         let cloudCache = [];
 
-        // Auto-set current date
         document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
 
         function calculateTotalCost() {
@@ -187,7 +184,6 @@
             if(tabId === 'tab-approval') renderCloudTable();
         }
 
-        // Save directly to Firebase Realtime Database
         function handleFormSubmit(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitFormBtn');
@@ -218,7 +214,7 @@
                 if (error) {
                     alert("Cloud Save Error: " + error.message);
                 } else {
-                    alert(`Success! Requisition ${newRequest.reqId} sent to Cloud & Admin.`);
+                    alert(`Success! Requisition ${newRequest.reqId} sent to Cloud Database.`);
                     document.getElementById('fuelRequestForm').reset();
                     document.getElementById('requestDate').value = dateVal;
                     switchTab('tab-approval');
@@ -227,12 +223,11 @@
             });
         }
 
-        // Real-Time Firebase Sync Listener
         db.on('value', (snapshot) => {
             cloudCache = [];
             if (snapshot.exists()) {
                 snapshot.forEach((child) => {
-                    cloudCache.unshift(child.val()); // newest first
+                    cloudCache.unshift(child.val());
                 });
             }
             renderCloudTable();
