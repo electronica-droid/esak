@@ -4,14 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CGWCEIS Training Institute - User Fuel Portal</title>
-    
-    <!-- EmailJS SDK Integration -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function() {
-            emailjs.init("CzwsK6Ru5yq5XzrW0");
-        })();
-    </script>
 
     <style>
         :root {
@@ -156,14 +148,12 @@
         <div class="footer"><p>© 2026 CGWCEIS Training Institute. All Rights Reserved.</p></div>
     </div>
 
-    <!-- Include Firebase v8 Compatibility Libraries -->
+    <!-- Firebase v8 Compatibility Libraries -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const ADMIN_EMAIL = "arvin.araneta@gmail.com";
-
-        // Corrected Firebase Config (with databaseURL added)
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
             authDomain: "pcg-fuel-portal.firebaseapp.com",
@@ -197,31 +187,7 @@
             if(tabId === 'tab-approval') renderCloudTable();
         }
 
-        // Send EmailJS Notification
-        function sendAdminNotification(requestData) {
-            const templateParams = {
-                to_email: ADMIN_EMAIL,
-                req_id: requestData.reqId,
-                personnel: requestData.personnel,
-                rank: requestData.rank,
-                branch: requestData.branch,
-                vessel_vehicle: requestData.vesselVehicle,
-                fuel_type: requestData.fuelType,
-                quantity: requestData.quantity,
-                total_cost: requestData.cost,
-                date: requestData.date,
-                purpose: requestData.purpose
-            };
-
-            emailjs.send('service_f6j7qyn', 'template_tpswnw5', templateParams)
-                .then(function(response) {
-                    console.log('Email sent!', response.status);
-                }, function(error) {
-                    console.error('Email error:', error);
-                });
-        }
-
-        // Save to Firebase Cloud DB
+        // Save directly to Firebase Realtime Database
         function handleFormSubmit(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitFormBtn');
@@ -253,7 +219,6 @@
                     alert("Cloud Save Error: " + error.message);
                 } else {
                     alert(`Success! Requisition ${newRequest.reqId} sent to Cloud & Admin.`);
-                    sendAdminNotification(newRequest);
                     document.getElementById('fuelRequestForm').reset();
                     document.getElementById('requestDate').value = dateVal;
                     switchTab('tab-approval');
