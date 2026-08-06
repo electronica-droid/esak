@@ -36,13 +36,11 @@
         
         .section-title { font-size: 16px; color: var(--primary-blue); border-left: 5px solid var(--ocean-blue); padding-left: 10px; margin-bottom: 20px; text-transform: uppercase; font-weight: bold; }
         
-        /* Status Badges */
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
         .status-badge.pending { background-color: #FEF3C7; color: #D97706; border: 1px solid #F59E0B; }
         .status-badge.approved { background-color: #D1FAE5; color: #059669; }
         .status-badge.disapproved { background-color: #FEE2E2; color: #DC2626; }
         
-        /* Action Links */
         .action-btn { padding: 4px 8px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 11px; text-transform: uppercase; border: none; margin-right: 4px; }
         .action-btn.approve { background-color: #10B981; color: white; }
         .action-btn.disapprove { background-color: #EF4444; color: white; }
@@ -129,7 +127,6 @@
     <script>
         const BUDGET_LIMIT = 14000.00;
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
             authDomain: "pcg-fuel-portal.firebaseapp.com",
@@ -140,7 +137,6 @@
             appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database().ref('fuel_requests');
 
@@ -153,12 +149,11 @@
             document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
         }
 
-        // Real-Time Firebase Listener
         db.on('value', (snapshot) => {
             allRequests = [];
             if (snapshot.exists()) {
                 snapshot.forEach((child) => {
-                    allRequests.unshift(child.val()); // Newest entries first
+                    allRequests.unshift(child.val());
                 });
             }
             renderAdminPanels();
@@ -210,7 +205,6 @@
                 });
             }
 
-            // Calculate overall budget utilization across all approved items
             allRequests.forEach(r => {
                 if (r.status === 'approved') {
                     totalUtilized += r.cost;
@@ -222,7 +216,6 @@
             document.getElementById('totalUtilizedVal').innerText = `₱${totalUtilized.toLocaleString(undefined, {minimumFractionDigits:2})}`;
             document.getElementById('remainingBalanceVal').innerText = `₱${remainingBalance.toLocaleString(undefined, {minimumFractionDigits:2})}`;
 
-            // Render Disbursements Log
             const disburseBody = document.getElementById('adminDisbursementTable').getElementsByTagName('tbody')[0];
             disburseBody.innerHTML = '';
 
@@ -242,7 +235,6 @@
             }
         }
 
-        // Action Handlers for Real-Time Synchronization
         function updateStatus(reqId, newStatus, cost) {
             if (newStatus === 'approved') {
                 const currentUtilized = allRequests
