@@ -72,6 +72,10 @@
         .empty-row-msg { text-align: center; color: var(--gray-text); font-style: italic; }
         .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
+
+    <!-- Global UMD Firebase Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 </head>
 <body>
 
@@ -87,7 +91,7 @@
         <div class="controls-bar">
             <div class="filter-group">
                 <label style="font-weight:bold; font-size:13px; color:var(--primary-blue);">Status Filter:</label>
-                <select id="statusFilter" class="select-input">
+                <select id="statusFilter" class="select-input" onchange="renderCloudTable()">
                     <option value="ALL">All Requisitions</option>
                     <option value="pending">Pending Only</option>
                     <option value="approved">Approved Only</option>
@@ -98,15 +102,15 @@
         </div>
 
         <div class="tabs-nav">
-            <button class="tab-btn active" id="btn-request">1. Request Fuel</button>
-            <button class="tab-btn" id="btn-approval">2. Approval Status</button>
+            <button class="tab-btn active" id="btn-request" onclick="switchTab('tab-request')">1. Request Fuel</button>
+            <button class="tab-btn" id="btn-approval" onclick="switchTab('tab-approval')">2. Approval Status</button>
         </div>
 
         <!-- TAB 1: Request Form -->
         <div id="tab-request" class="tab-panel active">
             <div class="section-title">Fuel Requisition Form</div>
             
-            <form id="fuelRequestForm">
+            <form id="fuelRequestForm" onsubmit="handleFormSubmit(event)">
                 <div class="form-row">
                     <div class="form-group"><label for="officerName">Requesting Personnel</label><input type="text" id="officerName" required placeholder="e.g., ENS Juan Dela Cruz"></div>
                     <div class="form-group"><label for="officerRank">Rank / Designation</label><input type="text" id="officerRank" required placeholder="e.g., Instructor / Logistics Staff"></div>
@@ -123,10 +127,10 @@
                             <label class="radio-option"><input type="radio" id="fuelDies" name="fuelType" value="Diesel" required> Diesel</label>
                         </div>
                     </div>
-                    <div class="form-group"><label for="quantity">Quantity Requested (Liters)</label><input type="number" id="quantity" min="0.01" step="0.01" required placeholder="0.00"></div>
+                    <div class="form-group"><label for="quantity">Quantity Requested (Liters)</label><input type="number" id="quantity" min="0.01" step="0.01" oninput="calculateTotalCost()" required placeholder="0.00"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label for="fuelPrice">Manual Fuel Price Per Liter (PHP)</label><input type="number" id="fuelPrice" min="0.01" step="0.01" required placeholder="0.00"></div>
+                    <div class="form-group"><label for="fuelPrice">Manual Fuel Price Per Liter (PHP)</label><input type="number" id="fuelPrice" min="0.01" step="0.01" oninput="calculateTotalCost()" required placeholder="0.00"></div>
                     <div class="form-group"><label for="estimatedCost">Total Calculated Cost (PHP)</label><input type="number" id="estimatedCost" placeholder="0.00" readonly style="background-color: #E2E8F0; font-weight: bold;"></div>
                 </div>
                 <div class="form-row">
@@ -153,11 +157,7 @@
         <div class="footer"><p>© 2026 CGWCEIS Training Institute. All Rights Reserved.</p></div>
     </div>
 
-    <!-- Modern ES Module Firebase Import -->
-    <script type="module">
-        import { initializeApp } from "https://esm.sh/firebase@10.8.0/app";
-        import { getDatabase, ref, push, set, onValue } from "https://esm.sh/firebase@10.8.0/database";
-
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
             authDomain: "pcg-fuel-portal.firebaseapp.com",
@@ -169,41 +169,31 @@
             measurementId: "G-6HMR6EK33N"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const fuelRef = ref(db, 'fuel_requests');
+        // Initialize globally attached Firebase object
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database().ref('fuel_requests');
 
         let cloudCache = [];
 
-        // Auto-set Date
         document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
 
-        // Cost Calculator
         function calculateTotalCost() {
             const qty = parseFloat(document.getElementById('quantity').value) || 0;
             const price = parseFloat(document.getElementById('fuelPrice').value) || 0;
             document.getElementById('estimatedCost').value = (qty * price).toFixed(2);
         }
-        document.getElementById('quantity').addEventListener('input', calculateTotalCost);
-        document.getElementById('fuelPrice').addEventListener('input', calculateTotalCost);
 
-        // Tab Switching
-        window.switchTab = function(tabId) {
+        function switchTab(tabId) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            
-            const btnId = 'btn-' + tabId.split('-')[1];
-            document.getElementById(btnId).classList.add('active');
+            document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
             if (tabId === 'tab-approval') renderCloudTable();
-        };
+        }
 
-        document.getElementById('btn-request').addEventListener('click', () => switchTab('tab-request'));
-        document.getElementById('btn-approval').addEventListener('click', () => switchTab('tab-approval'));
-        document.getElementById('statusFilter').addEventListener('change', renderCloudTable);
-
-        // Form Submission
-        document.getElementById('fuelRequestForm').addEventListener('submit', async function(e) {
+        function handleFormSubmit(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitFormBtn');
@@ -214,7 +204,7 @@
             const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
             const vehicleVal = document.getElementById('vesselVehicle').value;
 
-            const newReqRef = push(fuelRef);
+            const newReqRef = db.push();
             const newRequest = {
                 id: newReqRef.key,
                 reqId: `#${dateVal.substring(0,4)}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -231,23 +221,24 @@
                 purpose: document.getElementById('purpose').value
             };
 
-            try {
-                await set(newReqRef, newRequest);
-                alert(`✅ SUCCESS: Requisition ${newRequest.reqId} saved to Cloud Database!`);
-                document.getElementById('fuelRequestForm').reset();
-                document.getElementById('requestDate').value = dateVal;
-                switchTab('tab-approval');
-            } catch (error) {
-                alert("❌ FIREBASE SAVE ERROR: " + error.message);
-                console.error("Firebase Error:", error);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Submit Fuel Request";
-            }
-        });
+            newReqRef.set(newRequest)
+                .then(() => {
+                    alert(`✅ SUCCESS: Requisition ${newRequest.reqId} saved to Cloud Database!`);
+                    document.getElementById('fuelRequestForm').reset();
+                    document.getElementById('requestDate').value = dateVal;
+                    switchTab('tab-approval');
+                })
+                .catch((error) => {
+                    alert("❌ FIREBASE SAVE ERROR: " + error.message);
+                    console.error("Firebase Error:", error);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Submit Fuel Request";
+                });
+        }
 
-        // Real-Time Listener
-        onValue(fuelRef, (snapshot) => {
+        db.on('value', (snapshot) => {
             cloudCache = [];
             if (snapshot.exists()) {
                 snapshot.forEach((child) => {
