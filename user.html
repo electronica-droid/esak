@@ -73,9 +73,9 @@
         .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
 
-    <!-- FIREBASE CDN LIBRARIES MUST BE IN HEAD OR TOP OF BODY BEFORE ANY CUSTOM SCRIPT -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- LOCAL FIREBASE SDK FILES -->
+    <script src="firebase-app.js"></script>
+    <script src="firebase-database.js"></script>
 </head>
 <body>
 
@@ -158,9 +158,8 @@
     </div>
 
     <script>
-        // Check that Firebase SDK exists before running
         if (typeof firebase === 'undefined') {
-            alert("⚠️ CRITICAL ERROR: Firebase SDK failed to load. Please check your internet connection or turn off AdBlockers.");
+            alert("⚠️ CRITICAL FILE MISSING: Please make sure 'firebase-app.js' and 'firebase-database.js' are downloaded into this same folder!");
         } else {
             const firebaseConfig = {
                 apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
