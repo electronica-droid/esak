@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CGWCEIS Training Institute - Admin Fuel Portal</title>
+    <title>CGWCEIS Training Institute - User Fuel Portal</title>
+
     <style>
         :root {
             --primary-blue: #0A2540;
             --ocean-blue: #0073CF;
+            --secondary-blue: #1E3A8A;
             --light-bg: #F4F6F9;
             --white: #FFFFFF;
             --gray-text: #4A5568;
             --border-color: #E2E8F0;
-            --success-green: #10B981;
             --accent-gold: #D4AF37;
-            --danger-red: #EF4444;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--light-bg); color: #333; padding: 20px; }
@@ -35,29 +35,40 @@
         .tab-panel.active { display: block; }
         
         .section-title { font-size: 16px; color: var(--primary-blue); border-left: 5px solid var(--ocean-blue); padding-left: 10px; margin-bottom: 20px; text-transform: uppercase; font-weight: bold; }
+        .form-group { margin-bottom: 18px; }
+        .form-row { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 600px) { .form-row { grid-template-columns: 1fr 1fr; } }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--primary-blue); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; }
+        .radio-group { display: flex; gap: 20px; padding-top: 5px; }
+        .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        
+        .btn-submit {
+            background-color: var(--ocean-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            display: block;
+            margin-top: 10px;
+            transition: background-color 0.2s ease;
+        }
+        .btn-submit:hover { background-color: var(--secondary-blue); }
+        .btn-submit:disabled { background-color: #94A3B8; cursor: not-allowed; }
         
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        .status-badge.pending { background-color: #FEF3C7; color: #D97706; border: 1px solid #F59E0B; }
+        .status-badge.pending { background-color: #FEF3C7; color: #D97706; }
         .status-badge.approved { background-color: #D1FAE5; color: #059669; }
         .status-badge.disapproved { background-color: #FEE2E2; color: #DC2626; }
-        
-        .action-btn { padding: 4px 8px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 11px; text-transform: uppercase; border: none; margin-right: 4px; }
-        .action-btn.approve { background-color: #10B981; color: white; }
-        .action-btn.disapprove { background-color: #EF4444; color: white; }
-        .action-btn.delete { background-color: #6B7280; color: white; }
-        .action-btn:hover { opacity: 0.85; }
         
         .portal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .portal-table th, .portal-table td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
         .portal-table th { background-color: #F8FAFC; color: var(--primary-blue); }
-        
-        .summary-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 25px; }
-        @media (min-width: 600px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } }
-        .card { background: #F8FAFC; border-radius: 6px; padding: 20px; border-left: 4px solid var(--ocean-blue); }
-        .card.allowance { border-left-color: var(--accent-gold); }
-        .card.remaining { border-left-color: var(--success-green); }
-        .card-label { font-size: 12px; text-transform: uppercase; color: var(--gray-text); font-weight: 600; }
-        .card-value { font-size: 24px; font-weight: bold; color: var(--primary-blue); margin-top: 5px; }
         .empty-row-msg { text-align: center; color: var(--gray-text); font-style: italic; }
         .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
@@ -69,50 +80,72 @@
             <img class="header-logo-img" src="PCG.jpg" alt="PCG Logo">
             <div class="header-text">
                 <h1>CGWCEIS Training Institute</h1>
-                <h2>Fuel Management Portal - Administrative Control Panel</h2>
+                <h2>Fuel Management Portal - Personnel Request Dashboard</h2>
             </div>
         </div>
 
         <div class="controls-bar">
             <div class="filter-group">
                 <label style="font-weight:bold; font-size:13px; color:var(--primary-blue);">Status Filter:</label>
-                <select id="adminStatusFilter" class="select-input" onchange="applyFilter()">
-                    <option value="ALL">All Entries</option>
-                    <option value="pending">Pending Review</option>
-                    <option value="approved">Approved</option>
-                    <option value="disapproved">Disapproved</option>
+                <select id="statusFilter" class="select-input">
+                    <option value="ALL">All Requisitions</option>
+                    <option value="pending">Pending Only</option>
+                    <option value="approved">Approved Only</option>
+                    <option value="disapproved">Disapproved Only</option>
                 </select>
             </div>
-            <div style="font-size: 12px; color: var(--ocean-blue);">Role Authority: <strong>Logistics Administrator</strong></div>
+            <div style="font-size: 12px; color: var(--gray-text);">Role Context: <strong>Requesting Party</strong></div>
         </div>
 
         <div class="tabs-nav">
-            <button class="tab-btn active" id="btn-approval" onclick="switchTab('tab-approval')">1. Authorization Actions</button>
-            <button class="tab-btn" id="btn-summary" onclick="switchTab('tab-summary')">2. Supply & Allowance Logs</button>
+            <button class="tab-btn active" id="btn-request">1. Request Fuel</button>
+            <button class="tab-btn" id="btn-approval">2. Approval Status</button>
         </div>
 
-        <!-- TAB 1: Authorization Actions -->
-        <div id="tab-approval" class="tab-panel active">
-            <div class="section-title">Incoming Institute Requisitions Ledger</div>
-            <p style="font-size:13px; color:var(--gray-text); margin-bottom:15px;">Review incoming live operational entries below. Updates trigger real-time multi-user status syncs.</p>
-            <table class="portal-table" id="adminApprovalTable">
-                <thead><tr><th>Req ID</th><th>Personnel / Branch</th><th>Vessel/Vehicle</th><th>Fuel Type</th><th>Volume</th><th>Total Cost</th><th>Action Handlers</th></tr></thead>
-                <tbody></tbody>
-            </table>
+        <!-- TAB 1: Request Form -->
+        <div id="tab-request" class="tab-panel active">
+            <div class="section-title">Fuel Requisition Form</div>
+            
+            <form id="fuelRequestForm">
+                <div class="form-row">
+                    <div class="form-group"><label for="officerName">Requesting Personnel</label><input type="text" id="officerName" required placeholder="e.g., ENS Juan Dela Cruz"></div>
+                    <div class="form-group"><label for="officerRank">Rank / Designation</label><input type="text" id="officerRank" required placeholder="e.g., Instructor / Logistics Staff"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="unitStation">Branch / Section</label><input type="text" id="unitStation" required placeholder="e.g., Training Support Branch"></div>
+                    <div class="form-group"><label for="vesselVehicle">Vessel Hull No. / Vehicle Plate No.</label><input type="text" id="vesselVehicle" required placeholder="e.g., SJA-1234"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type of Fuel Required</label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" id="fuelGas" name="fuelType" value="Gasoline" required> Gasoline</label>
+                            <label class="radio-option"><input type="radio" id="fuelDies" name="fuelType" value="Diesel" required> Diesel</label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label for="quantity">Quantity Requested (Liters)</label><input type="number" id="quantity" min="0.01" step="0.01" required placeholder="0.00"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="fuelPrice">Manual Fuel Price Per Liter (PHP)</label><input type="number" id="fuelPrice" min="0.01" step="0.01" required placeholder="0.00"></div>
+                    <div class="form-group"><label for="estimatedCost">Total Calculated Cost (PHP)</label><input type="number" id="estimatedCost" placeholder="0.00" readonly style="background-color: #E2E8F0; font-weight: bold;"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="requestDate">Date of Request (Auto-Locked)</label>
+                        <input type="date" id="requestDate" required readonly style="background-color: #E2E8F0; cursor: not-allowed; font-weight: bold; color: var(--primary-blue);">
+                    </div>
+                </div>
+                <div class="form-group"><label for="purpose">Purpose of Official Mission</label><textarea id="purpose" required placeholder="Detail usage parameters..."></textarea></div>
+                
+                <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
+            </form>
         </div>
 
-        <!-- TAB 2: Budget Summary Analytics -->
-        <div id="tab-summary" class="tab-panel">
-            <div class="section-title">Monthly Supply Balances Summary</div>
-            <div class="summary-grid">
-                <div class="card allowance"><div class="card-label">Monthly Allowance Limit</div><div class="card-value">₱14,000.00</div></div>
-                <div class="card"><div class="card-label">Total Utilized</div><div class="card-value" id="totalUtilizedVal" style="color: var(--ocean-blue);">₱0.00</div></div>
-                <div class="card remaining"><div class="card-label">Remaining Balance Pool</div><div class="card-value" id="remainingBalanceVal" style="color: var(--success-green);">₱14,000.00</div></div>
-            </div>
-
-            <div class="section-title" style="font-size: 14px; margin-top: 20px;">Approved Disbursements Log</div>
-            <table class="portal-table" id="adminDisbursementTable">
-                <thead><tr><th>Disbursement Date</th><th>Reference ID</th><th>Personnel</th><th>Description / Operational Allocation</th><th>Charged Amount</th></tr></thead>
+        <!-- TAB 2: Approval Status -->
+        <div id="tab-approval" class="tab-panel">
+            <div class="section-title">Track Requisition Status</div>
+            <table class="portal-table" id="approvalTable">
+                <thead><tr><th>Req ID</th><th>Vessel/Vehicle</th><th>Fuel Type</th><th>Volume</th><th>Total Cost</th><th>Status</th><th>Cloud Sync</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -120,150 +153,138 @@
         <div class="footer"><p>© 2026 CGWCEIS Training Institute. All Rights Reserved.</p></div>
     </div>
 
-    <!-- Firebase Web SDK (v8 Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Modern ES Module Firebase Import -->
+    <script type="module">
+        import { initializeApp } from "https://esm.sh/firebase@10.8.0/app";
+        import { getDatabase, ref, push, set, onValue } from "https://esm.sh/firebase@10.8.0/database";
 
-    <script>
-        const BUDGET_LIMIT = 14000.00;
-
-        // Updated databaseURL specifically targeting us-central1 regional endpoint
         const firebaseConfig = {
-  apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
-  authDomain: "pcg-fuel-portal.firebaseapp.com",
-  databaseURL: "https://pcg-fuel-portal-default-rtdb.firebaseio.com",
-  projectId: "pcg-fuel-portal",
-  storageBucket: "pcg-fuel-portal.firebasestorage.app",
-  messagingSenderId: "889165377012",
-  appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1",
-  measurementId: "G-6HMR6EK33N"
-};
+            apiKey: "AIzaSyDUUNms_o9GFUWNHHDRzTRo5_zAF7aLYGM",
+            authDomain: "pcg-fuel-portal.firebaseapp.com",
+            databaseURL: "https://pcg-fuel-portal-default-rtdb.us-central1.firebasedatabase.app",
+            projectId: "pcg-fuel-portal",
+            storageBucket: "pcg-fuel-portal.firebasestorage.app",
+            messagingSenderId: "889165377012",
+            appId: "1:889165377012:web:f32f5de074e7d4ccfc9da1",
+            measurementId: "G-6HMR6EK33N"
+        };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const fuelRef = ref(db, 'fuel_requests');
+
+        let cloudCache = [];
+
+        // Auto-set Date
+        document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+
+        // Cost Calculator
+        function calculateTotalCost() {
+            const qty = parseFloat(document.getElementById('quantity').value) || 0;
+            const price = parseFloat(document.getElementById('fuelPrice').value) || 0;
+            document.getElementById('estimatedCost').value = (qty * price).toFixed(2);
         }
-        const db = firebase.database().ref('fuel_requests');
+        document.getElementById('quantity').addEventListener('input', calculateTotalCost);
+        document.getElementById('fuelPrice').addEventListener('input', calculateTotalCost);
 
-        let allRequests = [];
-
-        function switchTab(tabId) {
+        // Tab Switching
+        window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
-        }
+            
+            const btnId = 'btn-' + tabId.split('-')[1];
+            document.getElementById(btnId).classList.add('active');
+            if (tabId === 'tab-approval') renderCloudTable();
+        };
 
-        db.on('value', (snapshot) => {
-            allRequests = [];
-            if (snapshot.exists()) {
-                snapshot.forEach((child) => {
-                    allRequests.unshift(child.val());
-                });
+        document.getElementById('btn-request').addEventListener('click', () => switchTab('tab-request'));
+        document.getElementById('btn-approval').addEventListener('click', () => switchTab('tab-approval'));
+        document.getElementById('statusFilter').addEventListener('change', renderCloudTable);
+
+        // Form Submission
+        document.getElementById('fuelRequestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitFormBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Saving to Cloud...";
+
+            const dateVal = new Date().toISOString().split('T')[0];
+            const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
+            const vehicleVal = document.getElementById('vesselVehicle').value;
+
+            const newReqRef = push(fuelRef);
+            const newRequest = {
+                id: newReqRef.key,
+                reqId: `#${dateVal.substring(0,4)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                monthGroup: dateVal.substring(0, 7),
+                vesselVehicle: vehicleVal,
+                fuelType: fuelSelected,
+                quantity: parseFloat(document.getElementById('quantity').value),
+                cost: parseFloat(document.getElementById('estimatedCost').value),
+                status: 'pending',
+                date: dateVal,
+                personnel: document.getElementById('officerName').value,
+                rank: document.getElementById('officerRank').value,
+                branch: document.getElementById('unitStation').value,
+                purpose: document.getElementById('purpose').value
+            };
+
+            try {
+                await set(newReqRef, newRequest);
+                alert(`✅ SUCCESS: Requisition ${newRequest.reqId} saved to Cloud Database!`);
+                document.getElementById('fuelRequestForm').reset();
+                document.getElementById('requestDate').value = dateVal;
+                switchTab('tab-approval');
+            } catch (error) {
+                alert("❌ FIREBASE SAVE ERROR: " + error.message);
+                console.error("Firebase Error:", error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Fuel Request";
             }
-            renderAdminPanels();
-        }, (error) => {
-            console.error("Database error:", error);
         });
 
-        function applyFilter() {
-            renderAdminPanels();
-        }
-
-        function renderAdminPanels() {
-            const filterVal = document.getElementById('adminStatusFilter').value;
-            const approvalBody = document.getElementById('adminApprovalTable').getElementsByTagName('tbody')[0];
-            approvalBody.innerHTML = '';
-
-            let totalUtilized = 0;
-            const approvedItems = [];
-
-            const filteredRequests = allRequests.filter(req => filterVal === 'ALL' || req.status === filterVal);
-
-            if (filteredRequests.length === 0) {
-                approvalBody.innerHTML = `<tr><td colspan="7" class="empty-row-msg">No submissions recorded for this view.</td></tr>`;
-            } else {
-                filteredRequests.forEach(req => {
-                    const row = approvalBody.insertRow();
-                    let actionCell = '';
-
-                    if (req.status === 'pending') {
-                        actionCell = `
-                            <button class="action-btn approve" onclick="updateStatus('${req.id}', 'approved', ${req.cost})">Approve</button>
-                            <button class="action-btn disapprove" onclick="updateStatus('${req.id}', 'disapproved', 0)">Disapprove</button>
-                            <button class="action-btn delete" onclick="deleteReq('${req.id}')">Delete</button>
-                        `;
-                    } else {
-                        actionCell = `
-                            <span class="status-badge ${req.status}">${req.status}</span>
-                            <button class="action-btn delete" onclick="deleteReq('${req.id}')" style="margin-left:8px;">Delete</button>
-                        `;
-                    }
-
-                    row.innerHTML = `
-                        <td><strong>${req.reqId}</strong></td>
-                        <td>${req.personnel || 'N/A'} <br><small style="color:var(--gray-text);">${req.branch || ''}</small></td>
-                        <td>${req.vesselVehicle}</td>
-                        <td>${req.fuelType}</td>
-                        <td>${req.quantity} L</td>
-                        <td>₱${req.cost.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                        <td>${actionCell}</td>
-                    `;
+        // Real-Time Listener
+        onValue(fuelRef, (snapshot) => {
+            cloudCache = [];
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    cloudCache.unshift(child.val());
                 });
             }
+            renderCloudTable();
+        }, (error) => {
+            console.error("Database sync error:", error);
+        });
 
-            allRequests.forEach(r => {
-                if (r.status === 'approved') {
-                    totalUtilized += r.cost;
-                    approvedItems.push(r);
-                }
+        function renderCloudTable() {
+            const filterVal = document.getElementById('statusFilter').value;
+            const tbody = document.getElementById('approvalTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            const filtered = cloudCache.filter(r => filterVal === 'ALL' || r.status === filterVal);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-row-msg">No entries found for this filter.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(req => {
+                const row = tbody.insertRow();
+                const badgeClass = req.status === 'approved' ? 'approved' : (req.status === 'disapproved' ? 'disapproved' : 'pending');
+
+                row.innerHTML = `
+                    <td><strong>${req.reqId}</strong></td>
+                    <td>${req.vesselVehicle}</td>
+                    <td>${req.fuelType}</td>
+                    <td>${req.quantity} L</td>
+                    <td>₱${req.cost.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                    <td><span class="status-badge ${badgeClass}">${req.status}</span></td>
+                    <td><span style="font-size:11px; color:#059669; font-weight:bold;">● Live Synced</span></td>
+                `;
             });
-
-            const remainingBalance = BUDGET_LIMIT - totalUtilized;
-            document.getElementById('totalUtilizedVal').innerText = `₱${totalUtilized.toLocaleString(undefined, {minimumFractionDigits:2})}`;
-            document.getElementById('remainingBalanceVal').innerText = `₱${remainingBalance.toLocaleString(undefined, {minimumFractionDigits:2})}`;
-
-            const disburseBody = document.getElementById('adminDisbursementTable').getElementsByTagName('tbody')[0];
-            disburseBody.innerHTML = '';
-
-            if (approvedItems.length === 0) {
-                disburseBody.innerHTML = `<tr><td colspan="5" class="empty-row-msg">No approved disbursements logged.</td></tr>`;
-            } else {
-                approvedItems.forEach(item => {
-                    const row = disburseBody.insertRow();
-                    row.innerHTML = `
-                        <td>${item.date}</td>
-                        <td><strong>${item.reqId}</strong></td>
-                        <td>${item.personnel || 'N/A'}</td>
-                        <td>${item.fuelType} Request - ${item.vesselVehicle}</td>
-                        <td><strong>₱${item.cost.toLocaleString(undefined, {minimumFractionDigits:2})}</strong></td>
-                    `;
-                });
-            }
-        }
-
-        function updateStatus(reqId, newStatus, cost) {
-            if (newStatus === 'approved') {
-                const currentUtilized = allRequests
-                    .filter(r => r.status === 'approved')
-                    .reduce((sum, i) => sum + i.cost, 0);
-
-                if ((currentUtilized + cost) > BUDGET_LIMIT) {
-                    alert(`BUDGET EXCEEDED:\nApproving this request (₱${cost.toFixed(2)}) breaches the ₱14,000 monthly limit.\nAvailable: ₱${(BUDGET_LIMIT - currentUtilized).toFixed(2)}`);
-                    return;
-                }
-            }
-
-            db.child(reqId).update({ status: newStatus })
-                .then(() => alert(`Status updated to ${newStatus.toUpperCase()}!`))
-                .catch((error) => alert("Sync Error: " + error.message));
-        }
-
-        function deleteReq(reqId) {
-            if (confirm("Permanently delete this requisition record from the cloud database?")) {
-                db.child(reqId).remove()
-                    .then(() => alert("Record deleted successfully."))
-                    .catch((error) => alert("Delete Error: " + error.message));
-            }
         }
     </script>
 </body>
