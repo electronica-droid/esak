@@ -73,8 +73,9 @@
         .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
 
-    <!-- Global UMD Firebase Scripts -->
+    <!-- Global UMD Firebase Scripts (Core + Auth + Realtime Database) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 </head>
 <body>
@@ -169,31 +170,47 @@
             measurementId: "G-6HMR6EK33N"
         };
 
-        // Initialize globally attached Firebase object
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        const db = firebase.database().ref('fuel_requests');
 
+        const db = firebase.database().ref('fuel_requests');
         let cloudCache = [];
 
-        document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+        // Silent Anonymous Authentication Handler
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                console.log("Authenticated anonymously as User ID:", user.uid);
+                initDatabaseListener();
+            } else {
+                firebase.auth().signInAnonymously()
+                    .catch((error) => console.error("Anonymous Auth Error:", error.message));
+            }
+        });
 
-        function calculateTotalCost() {
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+        });
+
+        window.calculateTotalCost = function() {
             const qty = parseFloat(document.getElementById('quantity').value) || 0;
             const price = parseFloat(document.getElementById('fuelPrice').value) || 0;
             document.getElementById('estimatedCost').value = (qty * price).toFixed(2);
-        }
+        };
 
-        function switchTab(tabId) {
+        window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
+            
+            const btnId = 'btn-' + tabId.split('-')[1];
+            if (document.getElementById(btnId)) {
+                document.getElementById(btnId).classList.add('active');
+            }
             if (tabId === 'tab-approval') renderCloudTable();
-        }
+        };
 
-        function handleFormSubmit(e) {
+        window.handleFormSubmit = function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitFormBtn');
@@ -236,21 +253,23 @@
                     submitBtn.disabled = false;
                     submitBtn.innerText = "Submit Fuel Request";
                 });
+        };
+
+        function initDatabaseListener() {
+            db.on('value', (snapshot) => {
+                cloudCache = [];
+                if (snapshot.exists()) {
+                    snapshot.forEach((child) => {
+                        cloudCache.unshift(child.val());
+                    });
+                }
+                renderCloudTable();
+            }, (error) => {
+                console.error("Database sync error:", error);
+            });
         }
 
-        db.on('value', (snapshot) => {
-            cloudCache = [];
-            if (snapshot.exists()) {
-                snapshot.forEach((child) => {
-                    cloudCache.unshift(child.val());
-                });
-            }
-            renderCloudTable();
-        }, (error) => {
-            console.error("Database sync error:", error);
-        });
-
-        function renderCloudTable() {
+        window.renderCloudTable = function() {
             const filterVal = document.getElementById('statusFilter').value;
             const tbody = document.getElementById('approvalTable').getElementsByTagName('tbody')[0];
             tbody.innerHTML = '';
@@ -276,7 +295,7 @@
                     <td><span style="font-size:11px; color:#059669; font-weight:bold;">● Live Synced</span></td>
                 `;
             });
-        }
+        };
     </script>
 </body>
 </html>
