@@ -126,8 +126,8 @@
     <script>
         const BUDGET_LIMIT = 14000.00;
 
-        // REPLACE WITH YOUR SUPABASE CREDENTIALS
-        const SUPABASE_URL = "https://secuyzzqpcnatksmyqfw.supabase.co/rest/v1/";
+        // CLEANED SUPABASE BASE DOMAIN (No trailing /rest/v1/)
+        const SUPABASE_URL = "https://secuyzzqpcnatksmyqfw.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlY3V5enpxcGNuYXRrc215cWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNjkwMjUsImV4cCI6MjEwMTY0NTAyNX0.V871uFCf1cGe023tKq6IfuyH9TSlg3qpgEuJg0lF2gk";
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -160,7 +160,7 @@
                 return;
             }
 
-            allRequests = data;
+            allRequests = data || [];
             renderAdminPanels();
         }
 
