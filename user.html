@@ -73,7 +73,7 @@
         .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
 
-    <!-- SUPABASE JS CLIENT LIBRARY IN HEAD -->
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -221,13 +221,17 @@
                         .select();
 
                     if (error) {
-                        alert("❌ SUPABASE SAVE ERROR: " + error.message);
+                        alert("❌ SUPABASE SAVE ERROR: " + error.message + "\nHint: " + (error.hint || 'Check RLS policies'));
                         console.error("Supabase Error details:", error);
-                    } else {
+                    } else if (data && data.length > 0) {
                         alert(`✅ SUCCESS: Requisition ${reqIdVal} saved to Supabase SQL!`);
                         document.getElementById('fuelRequestForm').reset();
                         document.getElementById('requestDate').value = dateVal;
-                        fetchData();
+                        await fetchData();
+                        switchTab('tab-approval');
+                    } else {
+                        alert("⚠️ Saved, but RLS policy prevented returning inserted row data.");
+                        await fetchData();
                         switchTab('tab-approval');
                     }
                 } catch (err) {
