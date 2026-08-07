@@ -73,8 +73,13 @@
         .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
 
-    <!-- Supabase SDK -->
+    <!-- Supabase SDK with Fallback Handler -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        if (typeof supabase === 'undefined') {
+            document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
+        }
+    </script>
 </head>
 <body>
 
@@ -221,7 +226,7 @@
                         .select();
 
                     if (error) {
-                        alert("❌ SUPABASE SAVE ERROR: " + error.message + "\nHint: " + (error.hint || 'Check RLS policies'));
+                        alert("❌ SUPABASE SAVE ERROR:\n" + error.message + "\n\nHint: " + (error.hint || 'Check RLS policies or column names'));
                         console.error("Supabase Error details:", error);
                     } else if (data && data.length > 0) {
                         alert(`✅ SUCCESS: Requisition ${reqIdVal} saved to Supabase SQL!`);
@@ -230,12 +235,12 @@
                         await fetchData();
                         switchTab('tab-approval');
                     } else {
-                        alert("⚠️ Saved, but RLS policy prevented returning inserted row data.");
+                        alert("⚠️ Request sent, but returned no row array.");
                         await fetchData();
                         switchTab('tab-approval');
                     }
                 } catch (err) {
-                    alert("❌ UNEXPECTED ERROR: " + err.message);
+                    alert("❌ UNEXPECTED EXCEPTION: " + err.message);
                     console.error(err);
                 } finally {
                     submitBtn.disabled = false;
