@@ -172,7 +172,8 @@
             let cloudCache = [];
 
             document.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('requestDate').value = today;
                 fetchData();
             });
 
@@ -201,22 +202,25 @@
                 submitBtn.disabled = true;
                 submitBtn.innerText = "Saving to Supabase...";
 
-                const dateVal = new Date().toISOString().split('T')[0];
+                // Ensure strict YYYY-MM-DD string for PostgreSQL DATE type
+                const todayIso = new Date().toISOString().split('T')[0];
+                const dateVal = document.getElementById('requestDate').value || todayIso;
+                
                 const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
                 const reqIdVal = `#2026-${Math.floor(100 + Math.random() * 900)}`;
 
                 const payload = {
                     req_id: reqIdVal,
-                    personnel: document.getElementById('officerName').value,
-                    rank: document.getElementById('officerRank').value,
-                    branch: document.getElementById('unitStation').value,
-                    vessel_vehicle: document.getElementById('vesselVehicle').value,
+                    personnel: document.getElementById('officerName').value.trim(),
+                    rank: document.getElementById('officerRank').value.trim(),
+                    branch: document.getElementById('unitStation').value.trim(),
+                    vessel_vehicle: document.getElementById('vesselVehicle').value.trim(),
                     fuel_type: fuelSelected,
                     quantity: parseFloat(document.getElementById('quantity').value),
                     cost: parseFloat(document.getElementById('estimatedCost').value),
                     status: 'pending',
                     date: dateVal,
-                    purpose: document.getElementById('purpose').value
+                    purpose: document.getElementById('purpose').value.trim()
                 };
 
                 try {
@@ -226,18 +230,18 @@
                         .select();
 
                     if (error) {
-                        alert("❌ SUPABASE SAVE ERROR:\n" + error.message);
-                        console.error("Supabase Error details:", error);
-                    } else {
-                        alert(`✅ SUCCESS: Requisition ${reqIdVal} submitted and synced!`);
+                        alert("❌ SUPABASE SAVE ERROR:\n" + error.message + "\n\nDetails: " + (error.details || 'Check console'));
+                        console.error("Supabase Save Error:", error);
+                    } else if (data && data.length > 0) {
+                        alert(`✅ SUCCESS: Requisition ${reqIdVal} saved to Supabase SQL!`);
                         document.getElementById('fuelRequestForm').reset();
-                        document.getElementById('requestDate').value = dateVal;
+                        document.getElementById('requestDate').value = todayIso;
                         await fetchData();
                         switchTab('tab-approval');
                     }
                 } catch (err) {
-                    alert("❌ UNEXPECTED EXCEPTION: " + err.message);
-                    console.error(err);
+                    alert("❌ EXCEPTION DETECTED: " + err.message);
+                    console.error("Submit exception:", err);
                 } finally {
                     submitBtn.disabled = false;
                     submitBtn.innerText = "Submit Fuel Request";
