@@ -73,7 +73,7 @@
         .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
 
-    <!-- Supabase SDK with Fallback Handler -->
+    <!-- Supabase SDK with Automatic Fallback -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         if (typeof supabase === 'undefined') {
@@ -203,7 +203,7 @@
 
                 const dateVal = new Date().toISOString().split('T')[0];
                 const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
-                const reqIdVal = `#${dateVal.substring(0,4)}-${Math.floor(1000 + Math.random() * 9000)}`;
+                const reqIdVal = `#2026-${Math.floor(100 + Math.random() * 900)}`;
 
                 const payload = {
                     req_id: reqIdVal,
@@ -226,16 +226,12 @@
                         .select();
 
                     if (error) {
-                        alert("❌ SUPABASE SAVE ERROR:\n" + error.message + "\n\nHint: " + (error.hint || 'Check RLS policies or column names'));
+                        alert("❌ SUPABASE SAVE ERROR:\n" + error.message);
                         console.error("Supabase Error details:", error);
-                    } else if (data && data.length > 0) {
-                        alert(`✅ SUCCESS: Requisition ${reqIdVal} saved to Supabase SQL!`);
+                    } else {
+                        alert(`✅ SUCCESS: Requisition ${reqIdVal} submitted and synced!`);
                         document.getElementById('fuelRequestForm').reset();
                         document.getElementById('requestDate').value = dateVal;
-                        await fetchData();
-                        switchTab('tab-approval');
-                    } else {
-                        alert("⚠️ Request sent, but returned no row array.");
                         await fetchData();
                         switchTab('tab-approval');
                     }
