@@ -1,1 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGWCEIS Training Institute - User Fuel Portal</title>
 
+    <style>
+        :root {
+            --primary-blue: #0A2540;
+            --ocean-blue: #0073CF;
+            --secondary-blue: #1E3A8A;
+            --light-bg: #F4F6F9;
+            --white: #FFFFFF;
+            --gray-text: #4A5568;
+            --border-color: #E2E8F0;
+            --accent-gold: #D4AF37;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--light-bg); color: #333; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: var(--white); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { display: flex; align-items: center; border-bottom: 3px double var(--ocean-blue); padding-bottom: 20px; margin-bottom: 20px; }
+        .header-logo-img { width: 105px; height: 105px; object-fit: contain; margin-right: 20px; }
+        .header-text h1 { font-size: 22px; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-text h2 { font-size: 15px; color: var(--ocean-blue); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        
+        .controls-bar { background-color: #F8FAFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .filter-group { display: flex; align-items: center; gap: 8px; }
+        .select-input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-weight: 600; color: var(--primary-blue); background: var(--white); }
+        
+        .tabs-nav { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; gap: 5px; }
+        .tab-btn { background: #E2E8F0; color: var(--gray-text); border: none; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; border-top-left-radius: 6px; border-top-right-radius: 6px; flex: 1; }
+        .tab-btn.active { background: var(--ocean-blue); color: var(--white); border-bottom: 3px solid var(--accent-gold); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        
+        .section-title { font-size: 16px; color: var(--primary-blue); border-left: 5px solid var(--ocean-blue); padding-left: 10px; margin-bottom: 20px; text-transform: uppercase; font-weight: bold; }
+        .form-group { margin-bottom: 18px; }
+        .form-row { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 600px) { .form-row { grid-template-columns: 1fr 1fr; } }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--primary-blue); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; }
+        .radio-group { display: flex; gap: 20px; padding-top: 5px; }
+        .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        
+        .btn-submit {
+            background-color: var(--ocean-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            display: block;
+            margin-top: 10px;
+            transition: background-color 0.2s ease;
+        }
+        .btn-submit:hover { background-color: var(--secondary-blue); }
+        .btn-submit:disabled { background-color: #94A3B8; cursor: not-allowed; }
+        
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .status-badge.pending { background-color: #FEF3C7; color: #D97706; }
+        .status-badge.approved { background-color: #D1FAE5; color: #059669; }
+        .status-badge.disapproved { background-color: #FEE2E2; color: #DC2626; }
+        
+        .portal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .portal-table th, .portal-table td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
+        .portal-table th { background-color: #F8FAFC; color: var(--primary-blue); }
+        .empty-row-msg { text-align: center; color: var(--gray-text); font-style: italic; }
+        .footer { text-align: center; margin-top: 40px; font-size: 11px; color: var(--gray-text); border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+
+    <!-- Supabase Client Library with CDN Fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        if (typeof supabase === 'undefined') {
+            document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
+        }
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <img class="header-logo-img" src="PCG.jpg" alt="PCG Logo">
+            <div class="header-text">
+                <h1>CGWCEIS Training Institute</h1>
+                <h2>Fuel Management Portal - Personnel Request Dashboard</h2>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <div class="filter-group">
+                <label style="font-weight:bold; font-size:13px; color:var(--primary-blue);">Status Filter:</label>
+                <select id="statusFilter" class="select-input" onchange="renderTable()">
+                    <option value="ALL">All Requisitions</option>
+                    <option value="pending">Pending Only</option>
+                    <option value="approved">Approved Only</option>
+                    <option value="disapproved">Disapproved Only</option>
+                </select>
+            </div>
+            <div style="font-size: 12px; color: var(--gray-text);">Engine: <strong>Supabase SQL Cloud</strong></div>
+        </div>
+
+        <div class="tabs-nav">
+            <button class="tab-btn active" id="btn-request" onclick="switchTab('tab-request')">1. Request Fuel</button>
+            <button class="tab-btn" id="btn-approval" onclick="switchTab('tab-approval')">2. Approval Status</button>
+        </div>
+
+        <!-- TAB 1: Request Form -->
+        <div id="tab-request" class="tab-panel active">
+            <div class="section-title">Fuel Requisition Form</div>
+            
+            <form id="fuelRequestForm">
+                <div class="form-row">
+                    <div class="form-group"><label for="officerName">Requesting Personnel</label><input type="text" id="officerName" required placeholder="e.g., ENS Juan Dela Cruz"></div>
+                    <div class="form-group"><label for="officerRank">Rank / Designation</label><input type="text" id="officerRank" required placeholder="e.g., Instructor / Logistics Staff"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="unitStation">Branch / Section</label><input type="text" id="unitStation" required placeholder="e.g., Training Support Branch"></div>
+                    <div class="form-group"><label for="vesselVehicle">Vessel Hull No. / Vehicle Plate No.</label><input type="text" id="vesselVehicle" required placeholder="e.g., SJA-1234"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type of Fuel Required</label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" id="fuelGas" name="fuelType" value="Gasoline" required> Gasoline</label>
+                            <label class="radio-option"><input type="radio" id="fuelDies" name="fuelType" value="Diesel" required> Diesel</label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label for="quantity">Quantity Requested (Liters)</label><input type="number" id="quantity" min="0.01" step="0.01" oninput="calculateTotalCost()" required placeholder="0.00"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="fuelPrice">Manual Fuel Price Per Liter (PHP)</label><input type="number" id="fuelPrice" min="0.01" step="0.01" oninput="calculateTotalCost()" required placeholder="0.00"></div>
+                    <div class="form-group"><label for="estimatedCost">Total Calculated Cost (PHP)</label><input type="number" id="estimatedCost" placeholder="0.00" readonly style="background-color: #E2E8F0; font-weight: bold;"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="requestDate">Date of Request (Auto-Locked)</label>
+                        <input type="date" id="requestDate" required readonly style="background-color: #E2E8F0; cursor: not-allowed; font-weight: bold; color: var(--primary-blue);">
+                    </div>
+                </div>
+                <div class="form-group"><label for="purpose">Purpose of Official Mission</label><textarea id="purpose" required placeholder="Detail usage parameters..."></textarea></div>
+                
+                <button type="submit" class="btn-submit" id="submitFormBtn">Submit Fuel Request</button>
+            </form>
+        </div>
+
+        <!-- TAB 2: Approval Status -->
+        <div id="tab-approval" class="tab-panel">
+            <div class="section-title">Track Requisition Status</div>
+            <table class="portal-table" id="approvalTable">
+                <thead><tr><th>Req ID</th><th>Vessel/Vehicle</th><th>Fuel Type</th><th>Volume</th><th>Total Cost</th><th>Status</th><th>Cloud Sync</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="footer"><p>© 2026 CGWCEIS Training Institute. All Rights Reserved.</p></div>
+    </div>
+
+    <script>
+        if (typeof supabase === 'undefined') {
+            alert("⚠️ CDN ERROR: Unable to load Supabase SDK. Please check your internet connection.");
+        } else {
+            const SUPABASE_URL = "https://secuyzzqpcnatksmyqfw.supabase.co";
+            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlY3V5enpxcGNuYXRrc215cWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNjkwMjUsImV4cCI6MjEwMTY0NTAyNX0.V871uFCf1cGe023tKq6IfuyH9TSlg3qpgEuJg0lF2gk";
+
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            let cloudCache = [];
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const todayIso = new Date().toISOString().split('T')[0];
+                const dateInput = document.getElementById('requestDate');
+                if (dateInput) dateInput.value = todayIso;
+
+                // Bind form submit listener directly to prevent inline event conflicts
+                const form = document.getElementById('fuelRequestForm');
+                if (form) {
+                    form.onsubmit = null;
+                    form.addEventListener('submit', handleFormSubmit);
+                }
+
+                fetchData();
+            });
+
+            window.calculateTotalCost = function() {
+                const qty = parseFloat(document.getElementById('quantity').value) || 0;
+                const price = parseFloat(document.getElementById('fuelPrice').value) || 0;
+                document.getElementById('estimatedCost').value = (qty * price).toFixed(2);
+            };
+
+            window.switchTab = function(tabId) {
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                
+                const btnId = 'btn-' + tabId.split('-')[1];
+                if (document.getElementById(btnId)) {
+                    document.getElementById(btnId).classList.add('active');
+                }
+                if (tabId === 'tab-approval') fetchData();
+            };
+
+            async function handleFormSubmit(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const submitBtn = document.getElementById('submitFormBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Saving to Supabase...";
+
+                const todayIso = new Date().toISOString().split('T')[0];
+                const dateVal = document.getElementById('requestDate').value || todayIso;
+                const fuelSelected = document.querySelector('input[name="fuelType"]:checked').value;
+                const reqIdVal = `#2026-${Math.floor(100 + Math.random() * 900)}`;
+
+                const payload = {
+                    req_id: reqIdVal,
+                    personnel: document.getElementById('officerName').value.trim(),
+                    rank: document.getElementById('officerRank').value.trim(),
+                    branch: document.getElementById('unitStation').value.trim(),
+                    vessel_vehicle: document.getElementById('vesselVehicle').value.trim(),
+                    fuel_type: fuelSelected,
+                    quantity: parseFloat(document.getElementById('quantity').value),
+                    cost: parseFloat(document.getElementById('estimatedCost').value),
+                    status: 'pending',
+                    date: dateVal,
+                    purpose: document.getElementById('purpose').value.trim()
+                };
+
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('fuel_requests')
+                        .insert([payload])
+                        .select();
+
+                    if (error) {
+                        alert("❌ SUPABASE SAVE ERROR:\n" + error.message);
+                        console.error("Supabase Save Error:", error);
+                    } else {
+                        alert(`✅ SUCCESS: Requisition ${reqIdVal} saved directly to Supabase SQL!`);
+                        document.getElementById('fuelRequestForm').reset();
+                        document.getElementById('requestDate').value = todayIso;
+                        await fetchData();
+                        switchTab('tab-approval');
+                    }
+                } catch (err) {
+                    alert("❌ UNEXPECTED ERROR: " + err.message);
+                    console.error("Submit Exception:", err);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Submit Fuel Request";
+                }
+            }
+
+            async function fetchData() {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('fuel_requests')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (error) {
+                        console.error("Fetch Error:", error);
+                        return;
+                    }
+
+                    cloudCache = data || [];
+                    renderTable();
+                } catch (err) {
+                    console.error("Fetch Exception:", err);
+                }
+            }
+
+            window.renderTable = function() {
+                const filterVal = document.getElementById('statusFilter').value;
+                const tbody = document.getElementById('approvalTable').getElementsByTagName('tbody')[0];
+                tbody.innerHTML = '';
+
+                const filtered = cloudCache.filter(r => filterVal === 'ALL' || r.status === filterVal);
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="empty-row-msg">No entries found for this filter.</td></tr>`;
+                    return;
+                }
+
+                filtered.forEach(req => {
+                    const row = tbody.insertRow();
+                    const badgeClass = req.status === 'approved' ? 'approved' : (req.status === 'disapproved' ? 'disapproved' : 'pending');
+
+                    row.innerHTML = `
+                        <td><strong>${req.req_id}</strong></td>
+                        <td>${req.vessel_vehicle}</td>
+                        <td>${req.fuel_type}</td>
+                        <td>${req.quantity} L</td>
+                        <td>₱${parseFloat(req.cost).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                        <td><span class="status-badge ${badgeClass}">${req.status}</span></td>
+                        <td><span style="font-size:11px; color:#059669; font-weight:bold;">● SQL Synced</span></td>
+                    `;
+                });
+            };
+        }
+    </script>
+</body>
+</html>
