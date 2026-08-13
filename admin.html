@@ -99,7 +99,17 @@
             <div class="section-title">Incoming Institute Requisitions Ledger</div>
             <p style="font-size:13px; color:var(--gray-text); margin-bottom:15px;">Review incoming live operational entries below. Updates trigger multi-user database syncs.</p>
             <table class="portal-table" id="adminApprovalTable">
-                <thead><tr><th>Req ID</th><th>Personnel / Branch</th><th>Vessel/Vehicle</th><th>Fuel Type</th><th>Volume</th><th>Total Cost</th><th>Action Handlers</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Personnel / Branch</th>
+                        <th>Vessel/Vehicle</th>
+                        <th>Fuel Type</th>
+                        <th>Volume</th>
+                        <th>Total Cost</th>
+                        <th>Purpose of Mission</th>
+                        <th>Action Handlers</th>
+                    </tr>
+                </thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -126,7 +136,7 @@
     <script>
         const BUDGET_LIMIT = 14000.00;
 
-        // CLEANED SUPABASE BASE DOMAIN (No trailing /rest/v1/)
+        // CLEANED SUPABASE BASE DOMAIN
         const SUPABASE_URL = "https://secuyzzqpcnatksmyqfw.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlY3V5enpxcGNuYXRrc215cWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNjkwMjUsImV4cCI6MjEwMTY0NTAyNX0.V871uFCf1cGe023tKq6IfuyH9TSlg3qpgEuJg0lF2gk";
 
@@ -201,12 +211,12 @@
                     }
 
                     row.innerHTML = `
-                        <td><strong>${req.req_id}</strong></td>
                         <td>${req.personnel || 'N/A'} <br><small style="color:var(--gray-text);">${req.branch || ''}</small></td>
-                        <td>${req.vessel_vehicle}</td>
-                        <td>${req.fuel_type}</td>
-                        <td>${req.quantity} L</td>
+                        <td>${req.vessel_vehicle || 'N/A'}</td>
+                        <td>${req.fuel_type || 'N/A'}</td>
+                        <td>${req.quantity || 0} L</td>
                         <td>₱${costVal.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                        <td>${req.purpose || 'N/A'}</td>
                         <td>${actionCell}</td>
                     `;
                 });
@@ -233,10 +243,10 @@
                     const row = disburseBody.insertRow();
                     const itemCost = parseFloat(item.cost) || 0;
                     row.innerHTML = `
-                        <td>${item.date}</td>
-                        <td><strong>${item.req_id}</strong></td>
+                        <td>${item.date || 'N/A'}</td>
+                        <td><strong>${item.req_id || 'N/A'}</strong></td>
                         <td>${item.personnel || 'N/A'}</td>
-                        <td>${item.fuel_type} Request - ${item.vessel_vehicle}</td>
+                        <td>${item.fuel_type || ''} Request - ${item.vessel_vehicle || ''}</td>
                         <td><strong>₱${itemCost.toLocaleString(undefined, {minimumFractionDigits:2})}</strong></td>
                     `;
                 });
