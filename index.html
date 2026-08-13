@@ -153,7 +153,17 @@
         <div id="tab-approval" class="tab-panel">
             <div class="section-title">Track Requisition Status</div>
             <table class="portal-table" id="approvalTable">
-                <thead><tr><th>Req ID</th><th>Vessel/Vehicle</th><th>Fuel Type</th><th>Volume</th><th>Total Cost</th><th>Status</th><th>Cloud Sync</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Vessel/Vehicle</th>
+                        <th>Fuel Type</th>
+                        <th>Volume</th>
+                        <th>Total Cost</th>
+                        <th>Purpose of Mission</th>
+                        <th>Status</th>
+                        <th>Cloud Sync</th>
+                    </tr>
+                </thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -241,7 +251,7 @@
                         alert("❌ SUPABASE SAVE ERROR:\n" + error.message);
                         console.error("Supabase Save Error:", error);
                     } else {
-                        alert(`✅ SUCCESS: Requisition ${reqIdVal} saved directly to Supabase SQL!`);
+                        alert(`✅ SUCCESS: Requisition submitted and saved to Supabase SQL!`);
                         document.getElementById('fuelRequestForm').reset();
                         document.getElementById('requestDate').value = todayIso;
                         await fetchData();
@@ -292,12 +302,12 @@
                     const badgeClass = req.status === 'approved' ? 'approved' : (req.status === 'disapproved' ? 'disapproved' : 'pending');
 
                     row.innerHTML = `
-                        <td><strong>${req.req_id}</strong></td>
-                        <td>${req.vessel_vehicle}</td>
-                        <td>${req.fuel_type}</td>
-                        <td>${req.quantity} L</td>
-                        <td>₱${parseFloat(req.cost).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                        <td><span class="status-badge ${badgeClass}">${req.status}</span></td>
+                        <td>${req.vessel_vehicle || 'N/A'}</td>
+                        <td>${req.fuel_type || 'N/A'}</td>
+                        <td>${req.quantity || 0} L</td>
+                        <td>₱${parseFloat(req.cost || 0).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                        <td>${req.purpose || 'N/A'}</td>
+                        <td><span class="status-badge ${badgeClass}">${req.status || 'pending'}</span></td>
                         <td><span style="font-size:11px; color:#059669; font-weight:bold;">● SQL Synced</span></td>
                     `;
                 });
